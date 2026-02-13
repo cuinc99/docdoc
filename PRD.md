@@ -27,7 +27,7 @@ DocDoc adalah aplikasi manajemen klinik berbasis web untuk praktik medis di Indo
 | Komponen | Teknologi |
 |----------|-----------|
 | Backend | Laravel 12 (PHP >= 8.2) |
-| Frontend | React 19, TypeScript, Vite 6, Bun |
+| Frontend | React 19, TypeScript, Vite 7, Bun |
 | Database | PostgreSQL 17 |
 | Styling | TailwindCSS 4, shadcn/ui, RetroUI (NeoBrutalism) |
 | Autentikasi | Laravel Sanctum (SPA cookie-based auth) |

@@ -10,4 +10,16 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://docdoc-api.test',
+        changeOrigin: true,
+      },
+      '/sanctum': {
+        target: 'http://docdoc-api.test',
+        changeOrigin: true,
+      },
+    },
+  },
 })

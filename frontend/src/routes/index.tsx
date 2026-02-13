@@ -1,22 +1,31 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-
-function HomePage() {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <h1 className="text-4xl font-heading mb-4">DocDoc</h1>
-        <p className="text-muted-foreground font-body">Sistem Manajemen Klinik</p>
-      </div>
-    </div>
-  )
-}
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from '@/hooks/useAuth'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { GuestRoute } from '@/components/auth/GuestRoute'
+import { AppShell } from '@/components/layout/AppShell'
+import LoginPage from '@/pages/LoginPage'
+import RegisterPage from '@/pages/RegisterPage'
+import DashboardPage from '@/pages/DashboardPage'
 
 export function AppRouter() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route element={<GuestRoute />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppShell />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+            </Route>
+          </Route>
+
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   )
 }
