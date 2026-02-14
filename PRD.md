@@ -39,7 +39,7 @@ DocDoc adalah aplikasi manajemen klinik berbasis web untuk praktik medis di Indo
 | Icon | Lucide React |
 | PDF | laravel-dompdf |
 | Visualisasi | Recharts |
-| Notifikasi | Sonner (toast in-app) |
+| Notifikasi | Custom Snackbar (RetroUI NeoBrutalism, context-based) |
 | File Storage | Laravel Storage (local, S3-compatible) |
 | Runtime & Package Manager | Bun |
 | Deployment | Docker + Docker Compose |
@@ -78,7 +78,7 @@ DocDoc adalah aplikasi manajemen klinik berbasis web untuk praktik medis di Indo
 Single-tenant (1 instance = 1 klinik). Backend Laravel menyediakan REST API, dikonsumsi oleh frontend React SPA.
 
 ```
-[React SPA (Vite 6 + Bun)] <──HTTP/JSON──> [Laravel 12 API (Herd)] <──> [PostgreSQL 17]
+[React SPA (Vite 7 + Bun)] <──HTTP/JSON──> [Laravel 12 API (Herd)] <──> [PostgreSQL 17]
 ```
 
 ### 2.2 Role-Based Access Control (RBAC)

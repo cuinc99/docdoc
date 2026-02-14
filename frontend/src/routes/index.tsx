@@ -6,6 +6,8 @@ import { AppShell } from '@/components/layout/AppShell'
 import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
 import DashboardPage from '@/pages/DashboardPage'
+import PatientsPage from '@/pages/PatientsPage'
+import PatientDetailPage from '@/pages/PatientDetailPage'
 
 export function AppRouter() {
   return (
@@ -20,6 +22,8 @@ export function AppRouter() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AppShell />}>
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/patients" element={<PatientsPage />} />
+              <Route path="/patients/:id" element={<PatientDetailPage />} />
             </Route>
           </Route>
 

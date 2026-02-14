@@ -1,11 +1,11 @@
 import { createContext, useContext, useMemo, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
 import type { AxiosError } from 'axios'
 import api from '@/api/axios'
 import type { ApiResponse, User, LoginPayload, RegisterPayload } from '@/types'
 import type { ReactNode } from 'react'
+import { useSnackbar } from '@/components/retroui/Snackbar'
 
 interface AuthContextValue {
   user: User | null
@@ -23,6 +23,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { showSnackbar } = useSnackbar()
 
   const hasSession = localStorage.getItem('has_session') === '1'
 
@@ -55,12 +56,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (data) => {
       localStorage.setItem('has_session', '1')
       queryClient.setQueryData(['user'], data.data)
-      toast.success(data.message)
+      showSnackbar(data.message, 'success')
       navigate('/dashboard')
     },
     onError: (error: AxiosError<ApiResponse>) => {
       const message = error.response?.data?.message || 'Login gagal'
-      toast.error(message)
+      showSnackbar(message, 'error')
     },
   })
 
@@ -73,12 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (data) => {
       localStorage.setItem('has_session', '1')
       queryClient.setQueryData(['user'], data.data)
-      toast.success(data.message)
+      showSnackbar(data.message, 'success')
       navigate('/dashboard')
     },
     onError: (error: AxiosError<ApiResponse>) => {
       const message = error.response?.data?.message || 'Registrasi gagal'
-      toast.error(message)
+      showSnackbar(message, 'error')
     },
   })
 
@@ -91,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('has_session')
       queryClient.setQueryData(['user'], null)
       queryClient.clear()
-      toast.success(data.message)
+      showSnackbar(data.message, 'success')
       navigate('/login')
     },
   })

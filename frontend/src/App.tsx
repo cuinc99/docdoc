@@ -1,12 +1,13 @@
-import { Toaster } from 'sonner'
 import { QueryProvider } from '@/lib/query'
+import { SnackbarProvider } from '@/components/retroui/Snackbar'
 import { AppRouter } from '@/routes'
 
 function App() {
   return (
     <QueryProvider>
-      <AppRouter />
-      <Toaster position="top-right" richColors />
+      <SnackbarProvider>
+        <AppRouter />
+      </SnackbarProvider>
     </QueryProvider>
   )
 }
