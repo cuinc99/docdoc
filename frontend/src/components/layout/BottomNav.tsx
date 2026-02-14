@@ -44,7 +44,7 @@ export function BottomNav() {
           <button
             onClick={handleOpenDrawer}
             className={cn(
-              'flex flex-col items-center justify-center gap-0.5 w-16 py-1 rounded transition-colors cursor-pointer',
+              'flex flex-col items-center justify-center gap-0.5 w-16 py-1 rounded transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-ring',
               isDrawerOpen ? 'text-primary font-medium' : 'text-muted-foreground'
             )}
           >

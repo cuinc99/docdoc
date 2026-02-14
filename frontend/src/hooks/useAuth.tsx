@@ -25,7 +25,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const { showSnackbar } = useSnackbar()
 
-  const hasSession = localStorage.getItem('has_session') === '1'
+  const hasSession = (() => {
+    try {
+      return localStorage.getItem('has_session') === '1'
+    } catch {
+      return false
+    }
+  })()
 
   const { data: user, isLoading, isError } = useQuery<User | null>({
     queryKey: ['user'],
@@ -34,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data } = await api.get<ApiResponse<User>>('/api/user')
         return data.data
       } catch {
-        localStorage.removeItem('has_session')
+        try { localStorage.removeItem('has_session') } catch {}
         return null
       }
     },
@@ -54,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data
     },
     onSuccess: (data) => {
-      localStorage.setItem('has_session', '1')
+      try { localStorage.setItem('has_session', '1') } catch {}
       queryClient.setQueryData(['user'], data.data)
       showSnackbar(data.message, 'success')
       navigate('/dashboard')
@@ -72,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data
     },
     onSuccess: (data) => {
-      localStorage.setItem('has_session', '1')
+      try { localStorage.setItem('has_session', '1') } catch {}
       queryClient.setQueryData(['user'], data.data)
       showSnackbar(data.message, 'success')
       navigate('/dashboard')
@@ -89,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data
     },
     onSuccess: (data) => {
-      localStorage.removeItem('has_session')
+      try { localStorage.removeItem('has_session') } catch {}
       queryClient.setQueryData(['user'], null)
       queryClient.clear()
       showSnackbar(data.message, 'success')

@@ -77,7 +77,7 @@ export function Sidebar() {
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2 w-full rounded text-sm font-body text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+            className="flex items-center gap-3 px-3 py-2 w-full rounded text-sm font-body text-destructive hover:bg-destructive/10 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-ring"
           >
             <LogOut className="w-4 h-4" />
             Logout

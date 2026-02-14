@@ -36,9 +36,9 @@ function normalizeDateToInput(dateStr: string | undefined | null): string {
 }
 
 const selectClass =
-  'px-4 py-2 w-full border-2 border-border shadow-md transition focus:outline-hidden focus:shadow-xs font-body bg-background cursor-pointer'
+  'px-4 py-2 w-full border-2 border-border shadow-md transition focus:outline-hidden focus:shadow-xs focus-visible:ring-2 focus-visible:ring-ring font-body bg-background cursor-pointer'
 const textareaClass =
-  'px-4 py-2 w-full border-2 border-border shadow-md transition focus:outline-hidden focus:shadow-xs font-body bg-background'
+  'px-4 py-2 w-full border-2 border-border shadow-md transition focus:outline-hidden focus:shadow-xs focus-visible:ring-2 focus-visible:ring-ring font-body bg-background'
 
 export function PatientFormFields({ defaultValues, onSubmit, onCancel, isLoading, submitLabel }: PatientFormFieldsProps) {
   const {
@@ -83,17 +83,17 @@ export function PatientFormFields({ defaultValues, onSubmit, onCancel, isLoading
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="nik" className="block text-sm font-medium mb-1 font-body">NIK *</label>
-          <Input id="nik" placeholder="16 digit NIK" maxLength={16} aria-invalid={!!errors.nik} {...register('nik')} />
+          <Input id="nik" placeholder="16 digit NIK" maxLength={16} autoComplete="off" aria-invalid={!!errors.nik} {...register('nik')} />
           {errors.nik && <p className="text-destructive text-sm mt-1 font-body">{errors.nik.message}</p>}
         </div>
         <div>
           <label htmlFor="name" className="block text-sm font-medium mb-1 font-body">Nama Lengkap *</label>
-          <Input id="name" placeholder="Nama lengkap pasien" aria-invalid={!!errors.name} {...register('name')} />
+          <Input id="name" placeholder="Nama lengkap pasien" autoComplete="off" aria-invalid={!!errors.name} {...register('name')} />
           {errors.name && <p className="text-destructive text-sm mt-1 font-body">{errors.name.message}</p>}
         </div>
         <div>
           <label htmlFor="gender" className="block text-sm font-medium mb-1 font-body">Jenis Kelamin *</label>
-          <select id="gender" className={selectClass} aria-invalid={!!errors.gender} {...register('gender')}>
+          <select id="gender" className={selectClass} autoComplete="off" aria-invalid={!!errors.gender} {...register('gender')}>
             <option value="">Pilih jenis kelamin</option>
             <option value="male">Laki-laki</option>
             <option value="female">Perempuan</option>
@@ -102,17 +102,17 @@ export function PatientFormFields({ defaultValues, onSubmit, onCancel, isLoading
         </div>
         <div>
           <label htmlFor="birth_date" className="block text-sm font-medium mb-1 font-body">Tanggal Lahir *</label>
-          <Input id="birth_date" type="date" aria-invalid={!!errors.birth_date} {...register('birth_date')} />
+          <Input id="birth_date" type="date" autoComplete="off" aria-invalid={!!errors.birth_date} {...register('birth_date')} />
           {errors.birth_date && <p className="text-destructive text-sm mt-1 font-body">{errors.birth_date.message}</p>}
         </div>
         <div>
           <label htmlFor="phone" className="block text-sm font-medium mb-1 font-body">Telepon *</label>
-          <Input id="phone" placeholder="08xxxxxxxxxx" aria-invalid={!!errors.phone} {...register('phone')} />
+          <Input id="phone" placeholder="08xxxxxxxxxx" autoComplete="tel" aria-invalid={!!errors.phone} {...register('phone')} />
           {errors.phone && <p className="text-destructive text-sm mt-1 font-body">{errors.phone.message}</p>}
         </div>
         <div>
           <label htmlFor="email" className="block text-sm font-medium mb-1 font-body">Email</label>
-          <Input id="email" type="email" placeholder="email@contoh.com" aria-invalid={!!errors.email} {...register('email')} />
+          <Input id="email" type="email" placeholder="email@contoh.com" autoComplete="email" aria-invalid={!!errors.email} {...register('email')} />
           {errors.email && <p className="text-destructive text-sm mt-1 font-body">{errors.email.message}</p>}
         </div>
       </div>
@@ -124,6 +124,7 @@ export function PatientFormFields({ defaultValues, onSubmit, onCancel, isLoading
           rows={3}
           placeholder="Alamat lengkap"
           className={textareaClass}
+          autoComplete="off"
           aria-invalid={!!errors.address}
           {...register('address')}
         />
@@ -133,7 +134,7 @@ export function PatientFormFields({ defaultValues, onSubmit, onCancel, isLoading
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label htmlFor="blood_type" className="block text-sm font-medium mb-1 font-body">Golongan Darah</label>
-          <select id="blood_type" className={selectClass} {...register('blood_type')}>
+          <select id="blood_type" className={selectClass} autoComplete="off" {...register('blood_type')}>
             <option value="">Tidak diketahui</option>
             <option value="A">A</option>
             <option value="B">B</option>
@@ -143,18 +144,18 @@ export function PatientFormFields({ defaultValues, onSubmit, onCancel, isLoading
         </div>
         <div className="md:col-span-2">
           <label htmlFor="allergies" className="block text-sm font-medium mb-1 font-body">Alergi</label>
-          <Input id="allergies" placeholder="Alergi obat/makanan (jika ada)" {...register('allergies')} />
+          <Input id="allergies" placeholder="Alergi obat/makanan (jika ada)" autoComplete="off" {...register('allergies')} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="emergency_contact_name" className="block text-sm font-medium mb-1 font-body">Nama Kontak Darurat</label>
-          <Input id="emergency_contact_name" placeholder="Nama kontak darurat" {...register('emergency_contact_name')} />
+          <Input id="emergency_contact_name" placeholder="Nama kontak darurat" autoComplete="off" {...register('emergency_contact_name')} />
         </div>
         <div>
           <label htmlFor="emergency_contact_phone" className="block text-sm font-medium mb-1 font-body">Telepon Kontak Darurat</label>
-          <Input id="emergency_contact_phone" placeholder="08xxxxxxxxxx" {...register('emergency_contact_phone')} />
+          <Input id="emergency_contact_phone" placeholder="08xxxxxxxxxx" autoComplete="off" {...register('emergency_contact_phone')} />
         </div>
       </div>
 

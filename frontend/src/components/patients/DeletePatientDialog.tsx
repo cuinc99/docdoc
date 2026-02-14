@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { AxiosError } from 'axios'
 import { deletePatient } from '@/api/patients'
@@ -35,6 +35,15 @@ export function DeletePatientDialog({ open, onClose, patient }: DeletePatientDia
     mutation.mutate()
   }, [mutation])
 
+  useEffect(() => {
+    if (!open) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [open, onClose])
+
   if (!open || !patient) return null
 
   return (
@@ -44,7 +53,7 @@ export function DeletePatientDialog({ open, onClose, patient }: DeletePatientDia
         role="dialog"
         aria-modal="true"
         aria-label="Hapus Pasien"
-        className="relative z-10 w-full max-w-md bg-background border-2 border-border shadow-lg p-6"
+        className="relative z-10 w-full max-w-md bg-background border-2 border-border shadow-lg p-6 overscroll-contain"
       >
         <Text as="h2" className="text-xl mb-3">Hapus Pasien</Text>
         <p className="font-body text-muted-foreground mb-1">

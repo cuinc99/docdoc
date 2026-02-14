@@ -58,6 +58,7 @@ export default function RegisterPage() {
               <Input
                 id="name"
                 placeholder="Masukkan nama lengkap"
+                autoComplete="name"
                 aria-invalid={!!errors.name}
                 {...register('name')}
               />
@@ -71,6 +72,7 @@ export default function RegisterPage() {
                 id="email"
                 type="email"
                 placeholder="nama@email.com"
+                autoComplete="email"
                 aria-invalid={!!errors.email}
                 {...register('email')}
               />
@@ -83,6 +85,7 @@ export default function RegisterPage() {
               <Input
                 id="phone"
                 placeholder="08xxxxxxxxxx"
+                autoComplete="tel"
                 aria-invalid={!!errors.phone}
                 {...register('phone')}
               />
@@ -96,6 +99,7 @@ export default function RegisterPage() {
                 id="password"
                 type="password"
                 placeholder="Minimal 8 karakter"
+                autoComplete="new-password"
                 aria-invalid={!!errors.password}
                 {...register('password')}
               />
@@ -109,6 +113,7 @@ export default function RegisterPage() {
                 id="password_confirmation"
                 type="password"
                 placeholder="Ulangi password"
+                autoComplete="new-password"
                 aria-invalid={!!errors.password_confirmation}
                 {...register('password_confirmation')}
               />

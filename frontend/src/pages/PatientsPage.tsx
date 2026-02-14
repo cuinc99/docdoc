@@ -32,9 +32,9 @@ export default function PatientsPage() {
   const [editPatient, setEditPatient] = useState<Patient | undefined>()
   const [deleteTarget, setDeleteTarget] = useState<Patient | null>(null)
 
-  const canCreate = useMemo(() => user?.role === 'admin' || user?.role === 'receptionist', [user?.role])
-  const canEdit = useMemo(() => user?.role === 'admin' || user?.role === 'receptionist', [user?.role])
-  const canDelete = useMemo(() => user?.role === 'admin', [user?.role])
+  const canCreate = user?.role === 'admin' || user?.role === 'receptionist'
+  const canEdit = user?.role === 'admin' || user?.role === 'receptionist'
+  const canDelete = user?.role === 'admin'
 
   const { data, isLoading } = useQuery({
     queryKey: ['patients', page, search],

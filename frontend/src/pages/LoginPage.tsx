@@ -53,6 +53,7 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 placeholder="nama@email.com"
+                autoComplete="email"
                 aria-invalid={!!errors.email}
                 {...register('email')}
               />
@@ -66,6 +67,7 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 placeholder="Masukkan password"
+                autoComplete="current-password"
                 aria-invalid={!!errors.password}
                 {...register('password')}
               />

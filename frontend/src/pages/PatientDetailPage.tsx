@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Phone, Mail, MapPin, Droplets, AlertTriangle, UserCheck } from 'lucide-react'
@@ -36,15 +36,8 @@ export default function PatientDetailPage() {
 
   const handleBack = useCallback(() => navigate('/patients'), [navigate])
 
-  const age = useMemo(
-    () => (patient ? calcAge(patient.birth_date) : 0),
-    [patient]
-  )
-
-  const birthDateFormatted = useMemo(
-    () => (patient ? formatDate(patient.birth_date) : ''),
-    [patient]
-  )
+  const age = patient ? calcAge(patient.birth_date) : 0
+  const birthDateFormatted = patient ? formatDate(patient.birth_date) : ''
 
   if (isLoading) {
     return (
