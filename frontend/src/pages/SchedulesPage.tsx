@@ -17,6 +17,12 @@ import { DeleteScheduleDialog } from '@/components/schedules/DeleteScheduleDialo
 const selectClass =
   'px-4 py-2 border-2 border-border shadow-md transition focus:outline-hidden focus:shadow-xs focus-visible:ring-2 focus-visible:ring-ring font-body bg-background cursor-pointer'
 
+const TIMEZONE = 'Asia/Makassar'
+
+function toLocalDateStr(d: Date) {
+  return d.toLocaleDateString('en-CA', { timeZone: TIMEZONE })
+}
+
 function getWeekRange(offset: number) {
   const today = new Date()
   const start = new Date(today)
@@ -24,14 +30,14 @@ function getWeekRange(offset: number) {
   const end = new Date(start)
   end.setDate(start.getDate() + 6)
   return {
-    from: start.toISOString().slice(0, 10),
-    to: end.toISOString().slice(0, 10),
+    from: toLocalDateStr(start),
+    to: toLocalDateStr(end),
   }
 }
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+  return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: TIMEZONE })
 }
 
 export default function SchedulesPage() {

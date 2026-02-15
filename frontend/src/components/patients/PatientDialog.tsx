@@ -38,8 +38,8 @@ export function PatientDialog({ open, onClose, patient }: PatientDialogProps) {
   })
 
   const handleSubmit = useCallback(
-    async (data: PatientPayload) => {
-      await mutation.mutateAsync(data)
+    (data: PatientPayload) => {
+      mutation.mutate(data)
     },
     [mutation]
   )

@@ -24,7 +24,7 @@ type PatientForm = z.infer<typeof patientSchema>
 
 interface PatientFormFieldsProps {
   defaultValues?: Patient
-  onSubmit: (data: PatientPayload) => Promise<void>
+  onSubmit: (data: PatientPayload) => void | Promise<void>
   onCancel: () => void
   isLoading: boolean
   submitLabel: string

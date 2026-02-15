@@ -95,13 +95,13 @@ export function ScheduleDialog({ open, onClose, schedule }: ScheduleDialogProps)
   })
 
   const handleFormSubmit = useCallback(
-    async (data: ScheduleForm) => {
+    (data: ScheduleForm) => {
       const payload: SchedulePayload = {
         ...data,
         doctor_id: isDoctor ? user!.id : data.doctor_id,
         notes: data.notes || null,
       }
-      await mutation.mutateAsync(payload)
+      mutation.mutate(payload)
     },
     [mutation, isDoctor, user]
   )
