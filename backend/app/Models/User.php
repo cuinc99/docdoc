@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -53,5 +54,17 @@ class User extends Authenticatable
     public function isReceptionist(): bool
     {
         return $this->role === 'receptionist';
+    }
+
+    /** @return HasMany<Schedule, $this> */
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class, 'doctor_id');
+    }
+
+    /** @return HasMany<Queue, $this> */
+    public function queues(): HasMany
+    {
+        return $this->hasMany(Queue::class, 'doctor_id');
     }
 }

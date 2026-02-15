@@ -8,6 +8,8 @@ import RegisterPage from '@/pages/RegisterPage'
 import DashboardPage from '@/pages/DashboardPage'
 import PatientsPage from '@/pages/PatientsPage'
 import PatientDetailPage from '@/pages/PatientDetailPage'
+import SchedulesPage from '@/pages/SchedulesPage'
+import QueuePage from '@/pages/QueuePage'
 
 export function AppRouter() {
   return (
@@ -24,6 +26,8 @@ export function AppRouter() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/patients" element={<PatientsPage />} />
               <Route path="/patients/:id" element={<PatientDetailPage />} />
+              <Route path="/schedules" element={<SchedulesPage />} />
+              <Route path="/queue" element={<QueuePage />} />
             </Route>
           </Route>
 

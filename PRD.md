@@ -155,10 +155,19 @@ Staff klinik. Field: email, password, name, phone, role (admin/doctor/receptioni
 Pasien klinik. Field: mr_number (auto: MR{YY}{MM}{COUNT}), nik, name, gender, birth_date, phone, email (nullable), address, blood_type (nullable), allergies (nullable, text), emergency_contact_name (nullable), emergency_contact_phone (nullable).
 
 #### schedules
-Jadwal praktik dokter. Field: doctor_id, date, start_time, end_time, slot_duration (menit), is_available, notes (nullable). Constraint: satu jadwal per dokter per hari.
+Jadwal praktik dokter. Field: doctor_id, date, start_time, end_time, is_available, notes (nullable). Constraint: satu jadwal per dokter per hari.
+
+**Aturan Jadwal & Antrian:**
+- Jadwal tidak dapat diedit jika sudah ada antrian dengan status selain "waiting" (vitals, in_consultation, dll.)
+- Jika semua antrian masih berstatus "waiting", jadwal masih dapat diedit; jika tanggal diubah, semua antrian yang terdaftar otomatis mengikuti tanggal baru
+- Jadwal tidak dapat dinonaktifkan (toggle unavailable) jika sudah ada antrian terdaftar (status apapun)
 
 #### queues
 Antrian pasien (number-based, walk-in). Field: doctor_id, patient_id, queue_number, date, status (waiting/vitals/in_consultation/completed/cancelled), priority (normal/urgent), called_at (nullable), started_at (nullable), completed_at (nullable).
+
+**Fitur Antrian:**
+- Antrian dapat dibuat untuk tanggal hari ini atau tanggal mendatang (minimal kemarin)
+- Jika tanggal tidak dikirim, default ke hari ini
 
 #### vital_signs
 Tanda vital. Field: patient_id, queue_id, recorded_by (user_id), systolic, diastolic, heart_rate, temperature, respiratory_rate, oxygen_saturation (nullable), weight, height, bmi (auto-calculated), chief_complaint (text), notes (nullable).
@@ -206,11 +215,13 @@ Daftar layanan klinik. Field: name, price, is_active.
 
 **Pembuatan Jadwal:**
 1. Admin/Dokter membuat jadwal per hari
-2. Field: tanggal, jam mulai, jam selesai, durasi slot
+2. Field: tanggal, jam mulai, jam selesai
 3. Satu jadwal per dokter per hari
 
 **Manajemen:**
-- Toggle ketersediaan (available/unavailable)
+- Toggle ketersediaan (available/unavailable) — hanya jika belum ada antrian terdaftar
+- Edit jadwal — hanya jika belum ada antrian yang sedang diproses (status selain waiting)
+- Jika tanggal jadwal diubah dan masih ada antrian berstatus "waiting", tanggal antrian otomatis diubah mengikuti
 - Dokter hanya kelola jadwal sendiri
 - Admin dapat override semua jadwal
 
@@ -218,11 +229,11 @@ Daftar layanan klinik. Field: name, price, is_active.
 
 ### 4.3 Sistem Antrian
 
-**Prinsip:** Berbasis nomor urut, bukan time slot. Per-dokter, per-hari. Walk-in only.
+**Prinsip:** Berbasis nomor urut, bukan time slot. Per-dokter, per-hari. Walk-in only. Mendukung pendaftaran antrian untuk tanggal mendatang.
 
 **Alur:**
 ```
-Resepsionis tambah pasien ke antrian
+Resepsionis tambah pasien ke antrian (hari ini atau tanggal mendatang)
     ↓
 Sistem assign nomor antrian berikutnya
     ↓
@@ -238,6 +249,9 @@ Konsultasi selesai (status: completed)
 **Fitur:**
 - Prioritas urgent (dipanggil duluan)
 - Pembatalan antrian oleh Resepsionis
+- Navigasi tanggal (prev/next day) dengan minimum kemarin
+- Auto-refresh data setiap 30 detik (hanya pada tanggal hari ini)
+- Ringkasan antrian: menunggu, dilayani, selesai, total
 
 ---
 
@@ -432,13 +446,17 @@ Pengaturan
 
 | Aturan | Detail |
 |--------|--------|
-| Antrian walk-in | Berdasarkan nomor urut, bukan time slot |
+| Antrian walk-in | Berdasarkan nomor urut, bukan time slot. Bisa daftar untuk hari ini atau tanggal mendatang |
 | Rekam medis terkunci 24 jam | Setelah terkunci hanya bisa addendum |
 | Resep tidak bisa diedit setelah ditebus | Integritas data |
 | Satu jadwal per dokter per hari | Tidak ada recurring schedule |
+| Jadwal tidak bisa diedit jika antrian diproses | Jika ada antrian berstatus selain "waiting", jadwal terkunci untuk edit |
+| Jadwal tidak bisa dinonaktifkan jika ada antrian | Toggle unavailable diblokir jika antrian terdaftar |
+| Ubah tanggal jadwal cascade ke antrian | Jika semua antrian masih "waiting", tanggal antrian ikut berubah |
 | Partial payment | Invoice bisa dibayar bertahap |
 | Permission di backend | Laravel middleware + policies, frontend hanya UX |
 | Soft delete | Data pasien tidak dihapus permanen |
+| Timezone | Asia/Makassar (WITA, UTC+8) di backend dan frontend |
 
 ---
 
@@ -485,5 +503,5 @@ Pengaturan
 1. **Online-only** — Membutuhkan koneksi internet
 2. **Single-tenant** — Satu instance untuk satu klinik
 3. **Database obat manual** — Input nama obat manual, belum integrasi API
-4. **Single timezone** — WIB (UTC+7)
+4. **Single timezone** — WITA (UTC+8, Asia/Makassar)
 5. **Pembayaran manual** — Belum ada payment gateway
