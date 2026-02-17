@@ -54,6 +54,11 @@ export async function getQueues(params: QueueListParams = {}) {
   return data
 }
 
+export async function getQueue(id: number) {
+  const { data } = await api.get<ApiResponse<Queue>>(`/api/queues/${id}`)
+  return data
+}
+
 export async function createQueue(payload: QueuePayload) {
   const { data } = await api.post<ApiResponse<Queue>>('/api/queues', payload)
   return data

@@ -7,17 +7,13 @@ import { getDoctors } from '@/api/doctors'
 import type { AxiosError } from 'axios'
 import type { ApiResponse } from '@/types'
 import { useAuth } from '@/hooks/useAuth'
-import { Text } from '@/components/retroui/Text'
 import { Button } from '@/components/retroui/Button'
 import { Badge } from '@/components/retroui/Badge'
 import { useSnackbar } from '@/components/retroui/Snackbar'
 import { ScheduleDialog } from '@/components/schedules/ScheduleDialog'
 import { DeleteScheduleDialog } from '@/components/schedules/DeleteScheduleDialog'
-
-const selectClass =
-  'px-4 py-2 border-2 border-border shadow-md transition focus:outline-hidden focus:shadow-xs focus-visible:ring-2 focus-visible:ring-ring font-body bg-background cursor-pointer'
-
-const TIMEZONE = 'Asia/Makassar'
+import { PageHeader, EmptyState, ActionButton } from '@/components/shared'
+import { selectClass, TIMEZONE } from '@/lib/utils'
 
 function toLocalDateStr(d: Date) {
   return d.toLocaleDateString('en-CA', { timeZone: TIMEZONE })
@@ -107,15 +103,14 @@ export default function SchedulesPage() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <Text as="h1" className="text-2xl lg:text-3xl">Jadwal Dokter</Text>
+      <PageHeader title="Jadwal Dokter">
         {canManage && (
           <Button onClick={handleOpenCreate}>
             <Plus className="w-4 h-4 mr-2" />
             Tambah Jadwal
           </Button>
         )}
-      </div>
+      </PageHeader>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         {!isDoctor && (
@@ -152,13 +147,9 @@ export default function SchedulesPage() {
 
       <div className="space-y-3">
         {isLoading ? (
-          <div className="border-2 border-border p-8 text-center text-muted-foreground font-body">
-            Memuat data...
-          </div>
+          <EmptyState loading message="" />
         ) : schedules.length === 0 ? (
-          <div className="border-2 border-border p-8 text-center text-muted-foreground font-body">
-            Tidak ada jadwal pada periode ini
-          </div>
+          <EmptyState message="Tidak ada jadwal pada periode ini" />
         ) : (
           schedules.map((schedule) => (
             <div
@@ -189,30 +180,22 @@ export default function SchedulesPage() {
               </div>
               {canModify(schedule) && (
                 <div className="flex items-center gap-1">
-                  <button
+                  <ActionButton
+                    icon={schedule.is_available ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                    label={schedule.is_available ? 'Nonaktifkan' : 'Aktifkan'}
                     onClick={() => toggleMutation.mutate(schedule.id)}
-                    className="p-1.5 border-2 border-border hover:bg-accent transition-colors cursor-pointer"
-                    title={schedule.is_available ? 'Nonaktifkan' : 'Aktifkan'}
-                    aria-label={schedule.is_available ? 'Nonaktifkan jadwal' : 'Aktifkan jadwal'}
-                  >
-                    {schedule.is_available ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                  </button>
-                  <button
+                  />
+                  <ActionButton
+                    icon={<Pencil className="w-4 h-4" />}
+                    label="Edit"
                     onClick={() => setEditSchedule(schedule)}
-                    className="p-1.5 border-2 border-border hover:bg-accent transition-colors cursor-pointer"
-                    title="Edit"
-                    aria-label={`Edit jadwal ${schedule.doctor?.name}`}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
+                  />
+                  <ActionButton
+                    icon={<Trash2 className="w-4 h-4" />}
+                    label="Hapus"
+                    variant="destructive"
                     onClick={() => setDeleteTarget(schedule)}
-                    className="p-1.5 border-2 border-destructive text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-                    title="Hapus"
-                    aria-label={`Hapus jadwal ${schedule.doctor?.name}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  />
                 </div>
               )}
             </div>

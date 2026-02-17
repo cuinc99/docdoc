@@ -10,6 +10,11 @@ import PatientsPage from '@/pages/PatientsPage'
 import PatientDetailPage from '@/pages/PatientDetailPage'
 import SchedulesPage from '@/pages/SchedulesPage'
 import QueuePage from '@/pages/QueuePage'
+import VitalsPage from '@/pages/VitalsPage'
+import ConsultationPage from '@/pages/ConsultationPage'
+import MedicalRecordsPage from '@/pages/MedicalRecordsPage'
+import MedicalRecordDetailPage from '@/pages/MedicalRecordDetailPage'
+import EditMedicalRecordPage from '@/pages/EditMedicalRecordPage'
 
 export function AppRouter() {
   return (
@@ -28,6 +33,11 @@ export function AppRouter() {
               <Route path="/patients/:id" element={<PatientDetailPage />} />
               <Route path="/schedules" element={<SchedulesPage />} />
               <Route path="/queue" element={<QueuePage />} />
+              <Route path="/queue/:id/vitals" element={<VitalsPage />} />
+              <Route path="/queue/:id/consultation" element={<ConsultationPage />} />
+              <Route path="/medical-records" element={<MedicalRecordsPage />} />
+              <Route path="/medical-records/:id" element={<MedicalRecordDetailPage />} />
+              <Route path="/medical-records/:id/edit" element={<EditMedicalRecordPage />} />
             </Route>
           </Route>
 

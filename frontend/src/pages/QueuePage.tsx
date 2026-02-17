@@ -1,9 +1,12 @@
 import { useState, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Phone, CheckCircle, XCircle, Activity, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
-import { getQueues, callQueue, completeQueue, cancelQueue, updateQueueStatus } from '@/api/queues'
+import { Plus, Phone, CheckCircle, XCircle, Activity, RefreshCw, ChevronLeft, ChevronRight, Stethoscope, Edit, Clock, Users, UserCheck, CalendarCheck } from 'lucide-react'
+import { getQueues, callQueue, completeQueue, cancelQueue } from '@/api/queues'
 import type { Queue, QueueStatus } from '@/api/queues'
 import { getDoctors } from '@/api/doctors'
+import { getVitalSigns } from '@/api/vitalSigns'
+import { getMedicalRecords } from '@/api/medicalRecords'
 import type { AxiosError } from 'axios'
 import type { ApiResponse } from '@/types'
 import { useAuth } from '@/hooks/useAuth'
@@ -13,30 +16,20 @@ import { Badge } from '@/components/retroui/Badge'
 import { Input } from '@/components/retroui/Input'
 import { useSnackbar } from '@/components/retroui/Snackbar'
 import { AddQueueDialog } from '@/components/queues/AddQueueDialog'
+import { ActionButton } from '@/components/shared'
+import { selectClass, toWitaDateStr, getTodayStr, formatTimeId } from '@/lib/utils'
 
-const selectClass =
-  'px-4 py-2 border-2 border-border shadow-md transition focus:outline-hidden focus:shadow-xs focus-visible:ring-2 focus-visible:ring-ring font-body bg-background cursor-pointer'
-
-const statusConfig: Record<QueueStatus, { label: string; color: string }> = {
-  waiting: { label: 'Menunggu', color: 'bg-yellow-100 text-yellow-800' },
-  vitals: { label: 'Tanda Vital', color: 'bg-blue-100 text-blue-800' },
-  in_consultation: { label: 'Konsultasi', color: 'bg-green-100 text-green-800' },
-  completed: { label: 'Selesai', color: 'bg-gray-100 text-gray-600' },
-  cancelled: { label: 'Dibatalkan', color: 'bg-red-100 text-red-600' },
+const statusConfig: Record<QueueStatus, { label: string; color: string; dot: string }> = {
+  waiting: { label: 'Menunggu', color: 'bg-yellow-100 text-yellow-800', dot: 'bg-yellow-400' },
+  vitals: { label: 'Tanda Vital', color: 'bg-blue-100 text-blue-800', dot: 'bg-blue-400' },
+  in_consultation: { label: 'Konsultasi', color: 'bg-green-100 text-green-800', dot: 'bg-green-500' },
+  completed: { label: 'Selesai', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400' },
+  cancelled: { label: 'Dibatalkan', color: 'bg-red-100 text-red-600', dot: 'bg-red-400' },
 }
 
-const statusOrder: QueueStatus[] = ['waiting', 'vitals', 'in_consultation', 'completed', 'cancelled']
+const statusOrder: QueueStatus[] = ['in_consultation', 'vitals', 'waiting', 'completed', 'cancelled']
 
 const TIMEZONE = 'Asia/Makassar'
-
-function toWitaDateStr(d: Date = new Date()) {
-  const parts = d.toLocaleDateString('en-CA', { timeZone: TIMEZONE })
-  return parts
-}
-
-function getTodayStr() {
-  return toWitaDateStr()
-}
 
 function getYesterdayStr() {
   const d = new Date()
@@ -58,6 +51,7 @@ export default function QueuePage() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { showSnackbar } = useSnackbar()
+  const navigate = useNavigate()
   const isDoctor = user?.role === 'doctor'
   const isReceptionist = user?.role === 'receptionist'
   const isAdmin = user?.role === 'admin'
@@ -84,6 +78,41 @@ export default function QueuePage() {
       }),
     refetchInterval: isToday ? 30000 : false,
   })
+
+  const queues = data?.data ?? []
+  const queueIds = useMemo(() => queues.map((q) => q.id), [queues])
+
+  const { data: vitalsData } = useQuery({
+    queryKey: ['vital-signs-for-queues', selectedDate, doctorFilter],
+    queryFn: () => getVitalSigns({}),
+    enabled: queueIds.length > 0,
+  })
+
+  const { data: recordsData } = useQuery({
+    queryKey: ['medical-records-for-queues', selectedDate, doctorFilter],
+    queryFn: () => getMedicalRecords({ per_page: 100 }),
+    enabled: queueIds.length > 0,
+  })
+
+  const vitalsMap = useMemo(() => {
+    const map = new Map<number, number>()
+    if (vitalsData?.data) {
+      for (const vs of vitalsData.data) {
+        map.set(vs.queue_id, vs.id)
+      }
+    }
+    return map
+  }, [vitalsData])
+
+  const recordsMap = useMemo(() => {
+    const map = new Map<number, number>()
+    if (recordsData?.data) {
+      for (const rec of recordsData.data) {
+        map.set(rec.queue_id, rec.id)
+      }
+    }
+    return map
+  }, [recordsData])
 
   const callMutation = useMutation({
     mutationFn: (id: number) => callQueue(id),
@@ -118,17 +147,6 @@ export default function QueuePage() {
     },
   })
 
-  const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: QueueStatus }) => updateQueueStatus(id, status),
-    onSuccess: (res) => {
-      showSnackbar(res.message, 'success')
-      queryClient.invalidateQueries({ queryKey: ['queues'] })
-    },
-    onError: (error: AxiosError<ApiResponse>) => {
-      showSnackbar(error.response?.data?.message || 'Gagal mengubah status', 'error')
-    },
-  })
-
   const handleDoctorFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => setDoctorFilter(e.target.value),
     []
@@ -143,9 +161,7 @@ export default function QueuePage() {
     setSelectedDate((prev) => {
       const [y, m, d] = prev.split('-').map(Number)
       const date = new Date(y, m - 1, d - 1)
-      const newDate = toWitaDateStr(date)
-      const minDate = getYesterdayStr()
-      return newDate < minDate ? minDate : newDate
+      return toWitaDateStr(date)
     })
   }, [])
 
@@ -162,8 +178,6 @@ export default function QueuePage() {
   const handleOpenAdd = useCallback(() => setAddOpen(true), [])
   const handleCloseAdd = useCallback(() => setAddOpen(false), [])
   const handleRefresh = useCallback(() => { refetch() }, [refetch])
-
-  const queues = data?.data ?? []
 
   const grouped = useMemo(() => {
     const groups: Record<QueueStatus, Queue[]> = {
@@ -183,6 +197,7 @@ export default function QueuePage() {
     waiting: grouped.waiting.length + grouped.vitals.length,
     inConsultation: grouped.in_consultation.length,
     completed: grouped.completed.length,
+    cancelled: grouped.cancelled.length,
     total: queues.length,
   }), [grouped, queues.length])
 
@@ -206,12 +221,123 @@ export default function QueuePage() {
     [isAdmin, isReceptionist]
   )
 
-  const canPrevDay = selectedDate > getYesterdayStr()
+  const renderProgressIndicators = useCallback((q: Queue) => {
+    const hasVitals = vitalsMap.has(q.id)
+    const hasRecord = recordsMap.has(q.id)
+    if (q.status === 'cancelled') return null
+    return (
+      <div className="flex items-center gap-1.5 text-xs font-body">
+        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded ${hasVitals ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>
+          <Activity className="w-3 h-3" />
+          Vital
+        </span>
+        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded ${hasRecord ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
+          <Stethoscope className="w-3 h-3" />
+          Rekam
+        </span>
+      </div>
+    )
+  }, [vitalsMap, recordsMap])
+
+  const renderActions = useCallback((q: Queue) => {
+    const actions: React.ReactNode[] = []
+
+    if ((q.status === 'waiting' || q.status === 'vitals') && canUpdateStatus(q)) {
+      if (vitalsMap.has(q.id)) {
+        actions.push(
+          <ActionButton
+            key="edit-vitals"
+            icon={<Edit className="w-4 h-4" />}
+            label="Edit Vital"
+            onClick={() => navigate(`/queue/${q.id}/vitals`)}
+          />
+        )
+      } else {
+        actions.push(
+          <ActionButton
+            key="add-vitals"
+            icon={<Activity className="w-4 h-4" />}
+            label="Input Vital"
+            onClick={() => navigate(`/queue/${q.id}/vitals`)}
+          />
+        )
+      }
+    }
+
+    if ((q.status === 'waiting' || q.status === 'vitals') && canCall(q)) {
+      actions.push(
+        <ActionButton
+          key="call"
+          icon={<Phone className="w-4 h-4" />}
+          label="Panggil"
+          variant="success"
+          onClick={() => callMutation.mutate(q.id)}
+        />
+      )
+    }
+
+    if (q.status === 'in_consultation' && canComplete(q)) {
+      if (recordsMap.has(q.id)) {
+        actions.push(
+          <ActionButton
+            key="edit-record"
+            icon={<Edit className="w-4 h-4" />}
+            label="Edit Rekam Medis"
+            onClick={() => navigate(`/medical-records/${recordsMap.get(q.id)}/edit`)}
+          />
+        )
+      } else {
+        actions.push(
+          <ActionButton
+            key="consultation"
+            icon={<Stethoscope className="w-4 h-4" />}
+            label="Buat Rekam Medis"
+            onClick={() => navigate(`/queue/${q.id}/consultation`)}
+          />
+        )
+      }
+
+      actions.push(
+        <ActionButton
+          key="complete"
+          icon={<CheckCircle className="w-4 h-4" />}
+          label="Selesai"
+          variant="success"
+          onClick={() => completeMutation.mutate(q.id)}
+        />
+      )
+    }
+
+    if (q.status === 'completed' && recordsMap.has(q.id)) {
+      actions.push(
+        <ActionButton
+          key="view-record"
+          icon={<Stethoscope className="w-4 h-4" />}
+          label="Lihat Rekam Medis"
+          onClick={() => navigate(`/medical-records/${recordsMap.get(q.id)}`)}
+        />
+      )
+    }
+
+    if (q.status !== 'completed' && q.status !== 'cancelled' && canCancel(q)) {
+      actions.push(
+        <ActionButton
+          key="cancel"
+          icon={<XCircle className="w-4 h-4" />}
+          label="Batal"
+          variant="destructive"
+          onClick={() => cancelMutation.mutate(q.id)}
+        />
+      )
+    }
+
+    return actions.length > 0 ? <div className="flex items-center gap-1 flex-wrap">{actions}</div> : null
+  }, [vitalsMap, recordsMap, canUpdateStatus, canCall, canComplete, canCancel, navigate, callMutation, completeMutation, cancelMutation])
 
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <Text as="h1" className="text-2xl lg:text-3xl">Antrian</Text>
+        <Text as="h1" className="text-2xl lg:text-3xl">Antrian Pasien</Text>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="w-4 h-4 mr-1" />
@@ -220,82 +346,111 @@ export default function QueuePage() {
           {canAdd && (
             <Button onClick={handleOpenAdd}>
               <Plus className="w-4 h-4 mr-2" />
-              Tambah ke Antrian
+              Tambah Antrian
             </Button>
           )}
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrevDay} disabled={!canPrevDay}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Input
-            type="date"
-            value={selectedDate}
-            onChange={handleDateChange}
-            min={getYesterdayStr()}
-            className="w-auto"
-          />
-          <Button variant="outline" size="sm" onClick={handleNextDay}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-          {!isToday && (
-            <Button variant="outline" size="sm" onClick={handleToday}>
-              Hari Ini
+      <div className="border-2 border-border p-4 shadow-md mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handlePrevDay}>
+              <ChevronLeft className="w-4 h-4" />
             </Button>
-          )}
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={handleDateChange}
+              className="w-auto"
+            />
+            <Button variant="outline" size="sm" onClick={handleNextDay}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            {!isToday && (
+              <Button variant="outline" size="sm" onClick={handleToday}>
+                Hari Ini
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-body font-medium">
+              {formatDateLabel(selectedDate)}
+            </span>
+            {isToday && (
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-green-100 text-green-700 font-body">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                Live
+              </span>
+            )}
+          </div>
         </div>
-        <span className="text-sm text-muted-foreground font-body">
-          {formatDateLabel(selectedDate)}
-        </span>
+
+        {!isDoctor && (
+          <div className="mt-3 pt-3 border-t border-border">
+            <select
+              value={doctorFilter}
+              onChange={handleDoctorFilterChange}
+              className={selectClass}
+              aria-label="Filter dokter"
+            >
+              <option value="">Semua Dokter</option>
+              {doctorsData?.data?.map((doc) => (
+                <option key={doc.id} value={doc.id}>
+                  {doc.name}{doc.specialization ? ` - ${doc.specialization}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div className="border-2 border-border p-3 shadow-md text-center">
-          <p className="text-2xl font-heading font-bold">{summary.waiting}</p>
-          <p className="text-xs text-muted-foreground font-body">Menunggu</p>
+        <div className="border-2 border-border p-3 shadow-md">
+          <div className="flex items-center justify-between mb-1">
+            <Clock className="w-4 h-4 text-yellow-600" />
+            <span className="text-2xl font-heading font-bold">{summary.waiting}</span>
+          </div>
+          <p className="text-xs text-muted-foreground font-body font-medium">Menunggu</p>
         </div>
-        <div className="border-2 border-border p-3 shadow-md text-center">
-          <p className="text-2xl font-heading font-bold">{summary.inConsultation}</p>
-          <p className="text-xs text-muted-foreground font-body">Dilayani</p>
+        <div className="border-2 border-border p-3 shadow-md">
+          <div className="flex items-center justify-between mb-1">
+            <UserCheck className="w-4 h-4 text-green-600" />
+            <span className="text-2xl font-heading font-bold">{summary.inConsultation}</span>
+          </div>
+          <p className="text-xs text-muted-foreground font-body font-medium">Konsultasi</p>
         </div>
-        <div className="border-2 border-border p-3 shadow-md text-center">
-          <p className="text-2xl font-heading font-bold">{summary.completed}</p>
-          <p className="text-xs text-muted-foreground font-body">Selesai</p>
+        <div className="border-2 border-border p-3 shadow-md">
+          <div className="flex items-center justify-between mb-1">
+            <CalendarCheck className="w-4 h-4 text-muted-foreground" />
+            <span className="text-2xl font-heading font-bold">{summary.completed}</span>
+          </div>
+          <p className="text-xs text-muted-foreground font-body font-medium">Selesai</p>
         </div>
-        <div className="border-2 border-border p-3 shadow-md text-center">
-          <p className="text-2xl font-heading font-bold">{summary.total}</p>
-          <p className="text-xs text-muted-foreground font-body">Total</p>
+        <div className="border-2 border-border p-3 shadow-md">
+          <div className="flex items-center justify-between mb-1">
+            <Users className="w-4 h-4 text-muted-foreground" />
+            <span className="text-2xl font-heading font-bold">{summary.total}</span>
+          </div>
+          <p className="text-xs text-muted-foreground font-body font-medium">Total</p>
         </div>
       </div>
 
-      {!isDoctor && (
-        <div className="mb-4">
-          <select
-            value={doctorFilter}
-            onChange={handleDoctorFilterChange}
-            className={selectClass}
-            aria-label="Filter dokter"
-          >
-            <option value="">Semua Dokter</option>
-            {doctorsData?.data?.map((doc) => (
-              <option key={doc.id} value={doc.id}>
-                {doc.name}{doc.specialization ? ` - ${doc.specialization}` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
       {isLoading ? (
-        <div className="border-2 border-border p-8 text-center text-muted-foreground font-body">
-          Memuat data...
+        <div className="border-2 border-border p-12 text-center text-muted-foreground font-body">
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 opacity-50" />
+          Memuat data antrian...
         </div>
       ) : queues.length === 0 ? (
-        <div className="border-2 border-border p-8 text-center text-muted-foreground font-body">
-          Belum ada antrian pada tanggal ini
+        <div className="border-2 border-border p-12 text-center">
+          <Users className="w-8 h-8 mx-auto mb-2 text-muted-foreground opacity-50" />
+          <p className="text-muted-foreground font-body">Belum ada antrian pada tanggal ini</p>
+          {canAdd && (
+            <Button variant="outline" size="sm" onClick={handleOpenAdd} className="mt-3">
+              <Plus className="w-4 h-4 mr-1" />
+              Tambah Antrian Pertama
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
@@ -306,7 +461,8 @@ export default function QueuePage() {
             return (
               <div key={status}>
                 <div className="flex items-center gap-2 mb-3">
-                  <Text as="h2" className="text-lg">{statusConfig[status].label}</Text>
+                  <span className={`w-2.5 h-2.5 rounded-full ${statusConfig[status].dot}`} />
+                  <Text as="h2" className="text-base">{statusConfig[status].label}</Text>
                   <Badge variant="default" size="sm">{items.length}</Badge>
                 </div>
 
@@ -314,72 +470,53 @@ export default function QueuePage() {
                   {items.map((q) => (
                     <div
                       key={q.id}
-                      className="border-2 border-border p-4 shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                      className="border-2 border-border p-4 shadow-md"
                     >
-                      <div className="flex items-start gap-3 flex-1">
-                        <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-heading font-bold shrink-0">
-                          {q.queue_number}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-heading font-medium">{q.patient?.name}</span>
-                            <span className="text-xs font-mono text-muted-foreground">{q.patient?.mr_number}</span>
-                            {q.priority === 'urgent' && (
-                              <Badge className="bg-red-500 text-white" size="sm">URGENT</Badge>
-                            )}
-                            <span className={`text-xs px-2 py-0.5 rounded font-body ${statusConfig[q.status].color}`}>
-                              {statusConfig[q.status].label}
-                            </span>
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-heading font-bold shrink-0 ${
+                            q.priority === 'urgent'
+                              ? 'bg-red-500 text-white'
+                              : 'bg-primary text-primary-foreground'
+                          }`}>
+                            {q.queue_number}
                           </div>
-                          <p className="text-sm text-muted-foreground font-body">
-                            Dr. {q.doctor?.name}
-                            {q.patient?.gender === 'male' ? ' | L' : ' | P'}
-                            {q.patient?.phone ? ` | ${q.patient.phone}` : ''}
-                          </p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                              <span className="font-heading font-medium">{q.patient?.name}</span>
+                              <span className="text-xs font-mono text-muted-foreground">{q.patient?.mr_number}</span>
+                              {q.priority === 'urgent' && (
+                                <Badge className="bg-red-500 text-white" size="sm">URGENT</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground font-body mb-2">
+                              <span>Dr. {q.doctor?.name}</span>
+                              <span className="text-border">|</span>
+                              <span>{q.patient?.gender === 'male' ? 'Laki-laki' : 'Perempuan'}</span>
+                              {q.patient?.phone && (
+                                <>
+                                  <span className="text-border">|</span>
+                                  <span>{q.patient.phone}</span>
+                                </>
+                              )}
+                              {q.called_at && (
+                                <>
+                                  <span className="text-border">|</span>
+                                  <span>Dipanggil {formatTimeId(q.called_at)}</span>
+                                </>
+                              )}
+                              {q.completed_at && (
+                                <>
+                                  <span className="text-border">|</span>
+                                  <span>Selesai {formatTimeId(q.completed_at)}</span>
+                                </>
+                              )}
+                            </div>
+                            {renderProgressIndicators(q)}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-1 flex-wrap">
-                        {q.status === 'waiting' && canUpdateStatus(q) && (
-                          <button
-                            onClick={() => statusMutation.mutate({ id: q.id, status: 'vitals' })}
-                            className="p-1.5 border-2 border-border hover:bg-accent transition-colors cursor-pointer"
-                            title="Input Tanda Vital"
-                            aria-label={`Input tanda vital ${q.patient?.name}`}
-                          >
-                            <Activity className="w-4 h-4" />
-                          </button>
-                        )}
-                        {(q.status === 'waiting' || q.status === 'vitals') && canCall(q) && (
-                          <button
-                            onClick={() => callMutation.mutate(q.id)}
-                            className="p-1.5 border-2 border-green-600 text-green-600 hover:bg-green-50 transition-colors cursor-pointer"
-                            title="Panggil Pasien"
-                            aria-label={`Panggil ${q.patient?.name}`}
-                          >
-                            <Phone className="w-4 h-4" />
-                          </button>
-                        )}
-                        {q.status === 'in_consultation' && canComplete(q) && (
-                          <button
-                            onClick={() => completeMutation.mutate(q.id)}
-                            className="p-1.5 border-2 border-green-600 text-green-600 hover:bg-green-50 transition-colors cursor-pointer"
-                            title="Selesai Konsultasi"
-                            aria-label={`Selesaikan konsultasi ${q.patient?.name}`}
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                          </button>
-                        )}
-                        {q.status !== 'completed' && q.status !== 'cancelled' && canCancel(q) && (
-                          <button
-                            onClick={() => cancelMutation.mutate(q.id)}
-                            className="p-1.5 border-2 border-destructive text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-                            title="Batalkan"
-                            aria-label={`Batalkan antrian ${q.patient?.name}`}
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </button>
-                        )}
+                        {renderActions(q)}
                       </div>
                     </div>
                   ))}

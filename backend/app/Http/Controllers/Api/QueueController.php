@@ -44,6 +44,15 @@ class QueueController extends Controller
         return ApiResponse::success(QueueResource::collection($queues));
     }
 
+    public function show(Queue $queue): JsonResponse
+    {
+        Gate::authorize('view', $queue);
+
+        $queue->load(['doctor', 'patient']);
+
+        return ApiResponse::success(new QueueResource($queue));
+    }
+
     public function store(StoreQueueRequest $request): JsonResponse
     {
         Gate::authorize('create', Queue::class);

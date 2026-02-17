@@ -1,0 +1,8 @@
+{
+  "enabledPlugins": {
+    "security-engineer@factory-plugins": true,
+    "droid-evolved@factory-plugins": true,
+    "core@factory-plugins": true,
+    "mission-playbooks@factory-plugins": true
+  }
+}

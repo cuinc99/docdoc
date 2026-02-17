@@ -1,24 +1,16 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import {
-  useReactTable,
-  getCoreRowModel,
-  createColumnHelper,
-  flexRender,
-} from '@tanstack/react-table'
 import { Plus, Search, Eye, Pencil, Trash2 } from 'lucide-react'
 import { getPatients } from '@/api/patients'
 import type { Patient } from '@/api/patients'
 import { useAuth } from '@/hooks/useAuth'
-import { Text } from '@/components/retroui/Text'
 import { Button } from '@/components/retroui/Button'
 import { Input } from '@/components/retroui/Input'
 import { Badge } from '@/components/retroui/Badge'
 import { PatientDialog } from '@/components/patients/PatientDialog'
 import { DeletePatientDialog } from '@/components/patients/DeletePatientDialog'
-
-const columnHelper = createColumnHelper<Patient>()
+import { PageHeader, EmptyState, ActionButton } from '@/components/shared'
 
 export default function PatientsPage() {
   const { user } = useAuth()
@@ -68,92 +60,18 @@ export default function PatientsPage() {
   const handleCloseEdit = useCallback(() => setEditPatient(undefined), [])
   const handleCloseDelete = useCallback(() => setDeleteTarget(null), [])
 
-  const columns = useMemo(
-    () => [
-      columnHelper.accessor('mr_number', {
-        header: 'No MR',
-        cell: (info) => (
-          <span className="font-mono text-sm">{info.getValue()}</span>
-        ),
-      }),
-      columnHelper.accessor('name', {
-        header: 'Nama',
-        cell: (info) => <span className="font-medium">{info.getValue()}</span>,
-      }),
-      columnHelper.accessor('nik', {
-        header: 'NIK',
-        cell: (info) => <span className="font-mono text-sm">{info.getValue()}</span>,
-      }),
-      columnHelper.accessor('gender', {
-        header: 'Gender',
-        cell: (info) => (
-          <Badge variant="default" size="sm">
-            {info.getValue() === 'male' ? 'Laki-laki' : 'Perempuan'}
-          </Badge>
-        ),
-      }),
-      columnHelper.accessor('phone', {
-        header: 'Telepon',
-      }),
-      columnHelper.display({
-        id: 'actions',
-        header: 'Aksi',
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => navigate(`/patients/${row.original.id}`)}
-              className="p-1.5 border-2 border-border hover:bg-accent transition-colors cursor-pointer"
-              title="Lihat Detail"
-              aria-label={`Lihat detail ${row.original.name}`}
-            >
-              <Eye className="w-4 h-4" />
-            </button>
-            {canEdit && (
-              <button
-                onClick={() => setEditPatient(row.original)}
-                className="p-1.5 border-2 border-border hover:bg-accent transition-colors cursor-pointer"
-                title="Edit"
-                aria-label={`Edit ${row.original.name}`}
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-            )}
-            {canDelete && (
-              <button
-                onClick={() => setDeleteTarget(row.original)}
-                className="p-1.5 border-2 border-destructive text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-                title="Hapus"
-                aria-label={`Hapus ${row.original.name}`}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        ),
-      }),
-    ],
-    [canEdit, canDelete, navigate]
-  )
-
-  const tableData = useMemo(() => data?.data ?? [], [data?.data])
-
-  const table = useReactTable({
-    data: tableData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
+  const patients = data?.data ?? []
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <Text as="h1" className="text-2xl lg:text-3xl">Daftar Pasien</Text>
+      <PageHeader title="Daftar Pasien">
         {canCreate && (
           <Button onClick={handleOpenCreate}>
             <Plus className="w-4 h-4 mr-2" />
             Tambah Pasien
           </Button>
         )}
-      </div>
+      </PageHeader>
 
       <form onSubmit={handleSearch} className="flex gap-2 mb-4">
         <div className="relative flex-1">
@@ -168,50 +86,57 @@ export default function PatientsPage() {
         <Button type="submit" variant="secondary">Cari</Button>
       </form>
 
-      <div className="border-2 border-border shadow-md overflow-x-auto">
-        <table className="w-full min-w-[640px]">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b-2 border-border bg-primary/20">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-4 py-3 text-left text-sm font-heading font-medium"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan={columns.length} className="px-4 py-8 text-center text-muted-foreground font-body">
-                  Memuat data...
-                </td>
-              </tr>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="px-4 py-8 text-center text-muted-foreground font-body">
-                  {search ? 'Tidak ada pasien ditemukan' : 'Belum ada data pasien'}
-                </td>
-              </tr>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="border-b-2 border-border hover:bg-accent/30 transition-colors">
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3 text-sm font-body">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div className="space-y-3">
+        {isLoading ? (
+          <EmptyState loading message="" />
+        ) : patients.length === 0 ? (
+          <EmptyState message={search ? 'Tidak ada pasien ditemukan' : 'Belum ada data pasien'} />
+        ) : (
+          patients.map((patient) => (
+            <div
+              key={patient.id}
+              className="border-2 border-border p-4 shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+            >
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="font-heading font-medium">{patient.name}</span>
+                  <span className="text-xs font-mono text-muted-foreground">{patient.mr_number}</span>
+                  <Badge variant="default" size="sm">
+                    {patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground font-body">
+                  NIK: {patient.nik}
+                  {patient.phone ? ` · ${patient.phone}` : ''}
+                  {patient.birth_date ? ` · ${new Date(patient.birth_date + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                  {patient.address ? ` · ${patient.address}` : ''}
+                </p>
+              </div>
+              <div className="flex items-center gap-1">
+                <ActionButton
+                  icon={<Eye className="w-4 h-4" />}
+                  label="Detail"
+                  onClick={() => navigate(`/patients/${patient.id}`)}
+                />
+                {canEdit && (
+                  <ActionButton
+                    icon={<Pencil className="w-4 h-4" />}
+                    label="Edit"
+                    onClick={() => setEditPatient(patient)}
+                  />
+                )}
+                {canDelete && (
+                  <ActionButton
+                    icon={<Trash2 className="w-4 h-4" />}
+                    label="Hapus"
+                    variant="destructive"
+                    onClick={() => setDeleteTarget(patient)}
+                  />
+                )}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {data?.meta && data.meta.last_page > 1 && (
