@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Filter } from 'lucide-react'
 import { getSchedules, toggleSchedule } from '@/api/schedules'
 import type { Schedule } from '@/api/schedules'
 import { getDoctors } from '@/api/doctors'
@@ -114,19 +114,22 @@ export default function SchedulesPage() {
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         {!isDoctor && (
-          <select
-            value={doctorFilter}
-            onChange={handleDoctorFilterChange}
-            className={selectClass}
-            aria-label="Filter dokter"
-          >
-            <option value="">Semua Dokter</option>
-            {doctorsData?.data?.map((doc) => (
-              <option key={doc.id} value={doc.id}>
-                {doc.name}{doc.specialization ? ` - ${doc.specialization}` : ''}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            <select
+              value={doctorFilter}
+              onChange={handleDoctorFilterChange}
+              className={selectClass + ' min-w-[160px]'}
+              aria-label="Filter dokter"
+            >
+              <option value="">Semua Dokter</option>
+              {doctorsData?.data?.map((doc) => (
+                <option key={doc.id} value={doc.id}>
+                  {doc.name}{doc.specialization ? ` - ${doc.specialization}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
 
         <div className="flex items-center gap-2">

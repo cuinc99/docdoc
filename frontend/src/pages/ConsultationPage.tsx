@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, X, Star, Search } from 'lucide-react'
+import { ArrowLeft, Star, Search, Plus, Trash2 } from 'lucide-react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -11,6 +11,7 @@ import { getQueue } from '@/api/queues'
 import { getVitalSigns } from '@/api/vitalSigns'
 import { createMedicalRecord } from '@/api/medicalRecords'
 import type { Diagnosis } from '@/api/medicalRecords'
+import { createPrescription } from '@/api/prescriptions'
 import { searchIcd10 } from '@/api/icd10'
 import type { Icd10Item } from '@/api/icd10'
 import { Text } from '@/components/retroui/Text'
@@ -18,6 +19,15 @@ import { Button } from '@/components/retroui/Button'
 import { Badge } from '@/components/retroui/Badge'
 import { Input } from '@/components/retroui/Input'
 import { useSnackbar } from '@/components/retroui/Snackbar'
+
+interface DrugFormItem {
+  drug_name: string
+  dosage: string
+  frequency: string
+  duration: string
+  quantity: string
+  instructions: string
+}
 
 const consultationSchema = z.object({
   subjective: z.string().min(1, 'Wajib diisi').max(10000),
@@ -38,6 +48,9 @@ export default function ConsultationPage() {
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([])
   const [icdSearch, setIcdSearch] = useState('')
   const [showIcdDropdown, setShowIcdDropdown] = useState(false)
+
+  const [prescriptionItems, setPrescriptionItems] = useState<DrugFormItem[]>([])
+  const [prescriptionNotes, setPrescriptionNotes] = useState('')
 
   const { data: queueData, isLoading: queueLoading } = useQuery({
     queryKey: ['queue', queueId],
@@ -75,16 +88,36 @@ export default function ConsultationPage() {
   })
 
   const mutation = useMutation({
-    mutationFn: (data: ConsultationFormData) =>
-      createMedicalRecord({
+    mutationFn: async (data: ConsultationFormData) => {
+      const res = await createMedicalRecord({
         ...data,
         queue_id: queueId,
         diagnoses,
-      }),
+      })
+      const validRxItems = prescriptionItems
+        .filter((item) => item.drug_name && item.dosage && item.frequency && (parseInt(item.quantity) || 0) > 0)
+        .map((item) => ({
+          drug_name: item.drug_name,
+          dosage: item.dosage,
+          frequency: item.frequency,
+          duration: item.duration || null,
+          quantity: parseInt(item.quantity) || 1,
+          instructions: item.instructions || null,
+        }))
+      if (validRxItems.length > 0) {
+        await createPrescription({
+          medical_record_id: res.data.id,
+          items: validRxItems,
+          notes: prescriptionNotes || null,
+        })
+      }
+      return res
+    },
     onSuccess: (res) => {
       showSnackbar(res.message, 'success')
       queryClient.invalidateQueries({ queryKey: ['queues'] })
       queryClient.invalidateQueries({ queryKey: ['medical-records'] })
+      queryClient.invalidateQueries({ queryKey: ['prescriptions'] })
       navigate(`/medical-records/${res.data.id}`)
     },
     onError: (error: AxiosError<ApiResponse>) => {
@@ -146,6 +179,18 @@ export default function ConsultationPage() {
 
   const handleIcdBlur = useCallback(() => {
     setTimeout(() => setShowIcdDropdown(false), 200)
+  }, [])
+
+  const handleAddDrug = useCallback(() => {
+    setPrescriptionItems((prev) => [...prev, { drug_name: '', dosage: '', frequency: '', duration: '', quantity: '', instructions: '' }])
+  }, [])
+
+  const handleRemoveDrug = useCallback((index: number) => {
+    setPrescriptionItems((prev) => prev.filter((_, i) => i !== index))
+  }, [])
+
+  const handleDrugChange = useCallback((index: number, field: keyof DrugFormItem, value: string) => {
+    setPrescriptionItems((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)))
   }, [])
 
   if (queueLoading) {
@@ -333,10 +378,11 @@ export default function ConsultationPage() {
                   <button
                     type="button"
                     onClick={() => handleRemoveDiagnosis(d.code)}
-                    className="p-1 text-destructive hover:bg-destructive/10 cursor-pointer"
+                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-body text-destructive border-2 border-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                     aria-label={`Hapus diagnosis ${d.code}`}
                   >
-                    <X className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Hapus
                   </button>
                 </div>
               ))}
@@ -344,6 +390,101 @@ export default function ConsultationPage() {
           ) : (
             <p className="text-sm text-muted-foreground font-body">
               Belum ada diagnosis. Cari dan tambahkan minimal 1 diagnosis.
+            </p>
+          )}
+        </div>
+
+        <div className="border-2 border-border p-4 shadow-md">
+          <div className="flex items-center justify-between mb-4">
+            <Text as="h2" className="text-lg">Resep Obat</Text>
+            <Button type="button" variant="outline" size="sm" onClick={handleAddDrug}>
+              <Plus className="w-4 h-4 mr-1" /> Tambah Obat
+            </Button>
+          </div>
+
+          {prescriptionItems.length > 0 ? (
+            <div className="space-y-3">
+              {prescriptionItems.map((item, index) => (
+                <div key={index} className="border border-border p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-body font-medium">Obat {index + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDrug(index)}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-body text-destructive border-2 border-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Hapus
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-body text-muted-foreground">Nama Obat *</label>
+                      <Input
+                        value={item.drug_name}
+                        onChange={(e) => handleDrugChange(index, 'drug_name', e.target.value)}
+                        placeholder="Nama obat"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-body text-muted-foreground">Dosis *</label>
+                      <Input
+                        value={item.dosage}
+                        onChange={(e) => handleDrugChange(index, 'dosage', e.target.value)}
+                        placeholder="cth: 500mg"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-body text-muted-foreground">Frekuensi *</label>
+                      <Input
+                        value={item.frequency}
+                        onChange={(e) => handleDrugChange(index, 'frequency', e.target.value)}
+                        placeholder="cth: 3x sehari"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-body text-muted-foreground">Durasi</label>
+                      <Input
+                        value={item.duration}
+                        onChange={(e) => handleDrugChange(index, 'duration', e.target.value)}
+                        placeholder="cth: 5 hari"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-body text-muted-foreground">Jumlah *</label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={item.quantity}
+                        onChange={(e) => handleDrugChange(index, 'quantity', e.target.value)}
+                        placeholder="1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-body text-muted-foreground">Instruksi</label>
+                      <Input
+                        value={item.instructions}
+                        onChange={(e) => handleDrugChange(index, 'instructions', e.target.value)}
+                        placeholder="cth: Sesudah makan"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <div>
+                <label className="text-xs font-body text-muted-foreground">Catatan Resep</label>
+                <textarea
+                  className="px-4 py-2 w-full rounded border-2 shadow-md transition focus:outline-hidden focus:shadow-xs font-body min-h-[60px] resize-y"
+                  placeholder="Catatan tambahan untuk resep..."
+                  value={prescriptionNotes}
+                  onChange={(e) => setPrescriptionNotes(e.target.value)}
+                />
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground font-body">
+              Belum ada item obat. Klik "Tambah Obat" untuk menambahkan resep.
             </p>
           )}
         </div>

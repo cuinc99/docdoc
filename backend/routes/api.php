@@ -2,10 +2,13 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Icd10Controller;
+use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\MedicalRecordController;
 use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\PrescriptionController;
 use App\Http\Controllers\Api\QueueController;
 use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\VitalSignController;
 use Illuminate\Support\Facades\Route;
 
@@ -56,6 +59,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/medical-records/{medicalRecord}/addendums/{addendum}', [MedicalRecordController::class, 'destroyAddendum']);
 
     Route::get('/icd10', [Icd10Controller::class, 'index']);
+
+    Route::get('/prescriptions', [PrescriptionController::class, 'index']);
+    Route::get('/prescriptions/{prescription}', [PrescriptionController::class, 'show']);
+    Route::post('/prescriptions', [PrescriptionController::class, 'store']);
+    Route::put('/prescriptions/{prescription}', [PrescriptionController::class, 'update']);
+    Route::patch('/prescriptions/{prescription}/dispense', [PrescriptionController::class, 'dispense']);
+    Route::get('/prescriptions/{prescription}/pdf', [PrescriptionController::class, 'pdf']);
+
+    Route::get('/services', [ServiceController::class, 'index']);
+    Route::post('/services', [ServiceController::class, 'store']);
+    Route::put('/services/{service}', [ServiceController::class, 'update']);
+    Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
+
+    Route::get('/invoices', [InvoiceController::class, 'index']);
+    Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
+    Route::post('/invoices', [InvoiceController::class, 'store']);
+    Route::put('/invoices/{invoice}', [InvoiceController::class, 'update']);
+    Route::post('/invoices/{invoice}/payments', [InvoiceController::class, 'addPayment']);
+    Route::patch('/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel']);
+    Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'pdf']);
 
     Route::get('/doctors', function (\Illuminate\Http\Request $request) {
         $doctors = \App\Models\User::where('role', 'doctor')

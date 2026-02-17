@@ -13,40 +13,35 @@ export default function MedicalRecordsPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
-  const [patientSearch, setPatientSearch] = useState('')
+  const [search, setSearch] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['medical-records', page, patientSearch],
+    queryKey: ['medical-records', page, searchQuery],
     queryFn: () =>
       getMedicalRecords({
         page,
         per_page: 10,
         ...(user?.role === 'doctor' ? { doctor_id: user.id } : {}),
+        ...(searchQuery ? { search: searchQuery } : {}),
       }),
   })
 
   const records = data?.data ?? []
   const meta = data?.meta
 
-  const filteredRecords = patientSearch
-    ? records.filter(
-        (r) =>
-          r.patient?.name?.toLowerCase().includes(patientSearch.toLowerCase()) ||
-          r.patient?.mr_number?.toLowerCase().includes(patientSearch.toLowerCase())
-      )
-    : records
-
   const handleView = useCallback(
     (id: number) => navigate(`/medical-records/${id}`),
     [navigate]
   )
 
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setPatientSearch(e.target.value)
+  const handleSearch = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault()
+      setSearchQuery(search)
       setPage(1)
     },
-    []
+    [search]
   )
 
   const handlePrevPage = useCallback(() => setPage((p) => Math.max(1, p - 1)), [])
@@ -64,26 +59,27 @@ export default function MedicalRecordsPage() {
     <div>
       <PageHeader title="Rekam Medis" />
 
-      <div className="mb-4">
-        <div className="relative max-w-sm">
+      <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Cari pasien (nama / no. RM)..."
-            value={patientSearch}
-            onChange={handleSearchChange}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
           />
         </div>
-      </div>
+        <Button type="submit" variant="outline" size="sm">Cari</Button>
+      </form>
 
       <div className="space-y-3">
         {isLoading ? (
           <EmptyState loading message="" />
-        ) : filteredRecords.length === 0 ? (
-          <EmptyState message="Belum ada rekam medis" />
+        ) : records.length === 0 ? (
+          <EmptyState message={searchQuery ? 'Tidak ada rekam medis ditemukan' : 'Belum ada rekam medis'} />
         ) : (
-          filteredRecords.map((record) => (
+          records.map((record) => (
             <div
               key={record.id}
               className="border-2 border-border p-4 shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"

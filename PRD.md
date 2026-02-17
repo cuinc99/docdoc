@@ -2,9 +2,9 @@
 
 ## DocDoc: Sistem Manajemen Klinik
 
-**Versi:** 1.0.0
-**Tanggal:** 2026-02-12
-**Status:** Planning
+**Versi:** 1.1.0
+**Tanggal:** 2026-02-17
+**Status:** In Development (Phase 1-6 Complete)
 
 ---
 
@@ -298,14 +298,20 @@ Konsultasi selesai (status: completed)
 ### 4.6 Resep Obat
 
 **Alur:**
-1. Dokter buat resep selama konsultasi
+1. Dokter buat resep selama konsultasi (terintegrasi di halaman konsultasi)
 2. Item resep: nama obat, dosis, frekuensi, durasi, jumlah, instruksi
 3. Nomor resep auto-generate: RX{YY}{MM}{DD}{COUNT}
 4. Resepsionis menebus resep (mark as dispensed)
+5. Dokter dapat mengedit resep dari halaman edit rekam medis (jika belum ditebus)
 
 **Aturan:**
+- Resep hanya dibuat saat konsultasi (tidak ada pembuatan resep di luar sesi konsultasi)
 - Tidak dapat diedit/dihapus setelah ditebus
-- Output: Print + PDF download (via DomPDF)
+- Output: Print + PDF download (via DomPDF, ukuran A5)
+
+**Pencarian:**
+- Search berdasarkan nama pasien, nomor RM, atau nomor resep
+- Filter berdasarkan status (semua/belum ditebus/sudah ditebus)
 
 ---
 
@@ -314,7 +320,8 @@ Konsultasi selesai (status: completed)
 **Pembuatan Invoice:**
 - Generate dari layanan yang diberikan
 - Manual line items
-- Formula: subtotal + pajak - diskon = total
+- Formula: subtotal - diskon + pajak = total
+- Pajak dihitung sebagai persentase dari (subtotal - diskon)
 
 **Metode Pembayaran:**
 - Tunai
@@ -324,8 +331,14 @@ Konsultasi selesai (status: completed)
 
 **Fitur:**
 - Partial payment (bayar sebagian)
+- Tombol "Bayar Semua" untuk auto-fill sisa tagihan
+- Edit invoice (hanya jika status masih pending)
 - Riwayat pembayaran per invoice
 - Print invoice (PDF)
+
+**Pencarian:**
+- Search berdasarkan nama pasien, nomor RM, atau nomor invoice
+- Filter berdasarkan status (semua/pending/partial/paid/cancelled)
 
 ---
 
@@ -432,9 +445,12 @@ Pengaturan
 /patients/:id ................. Detail Pasien
 /medical-records .............. Rekam Medis
 /medical-records/:id .......... Detail Rekam Medis
+/medical-records/:id/edit ..... Edit Rekam Medis (SOAP + ICD-10 + Resep)
 /prescriptions ................ Resep Obat
 /billing ...................... Billing
+/billing/create ............... Buat Invoice
 /billing/:id .................. Detail Invoice
+/billing/:id/edit ............. Edit Invoice (pending only)
 /settings ..................... Pengaturan Klinik
 /settings/staff ............... Manajemen Staff
 /settings/services ............ Layanan
@@ -475,6 +491,9 @@ Pengaturan
 | Breakpoint | Mobile < 768px, Tablet 768-1023px, Desktop >= 1024px |
 | Pesan error | Bahasa Indonesia |
 | API response | `{ data, message, errors }` format konsisten |
+| Search/Filter UI | Search icon di dalam input (absolute left), tombol "Cari" variant outline, Filter icon + select dropdown |
+| Tombol hapus item | Icon Trash2 + teks "Hapus", border destructive |
+| Input number | Gunakan string state untuk mencegah masalah default value tidak bisa diedit |
 
 ---
 

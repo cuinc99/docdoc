@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Phone, CheckCircle, XCircle, Activity, RefreshCw, ChevronLeft, ChevronRight, Stethoscope, Edit, Clock, Users, UserCheck, CalendarCheck } from 'lucide-react'
+import { Plus, Phone, CheckCircle, XCircle, Activity, RefreshCw, ChevronLeft, ChevronRight, Stethoscope, Edit, Clock, Users, UserCheck, CalendarCheck, Filter } from 'lucide-react'
 import { getQueues, callQueue, completeQueue, cancelQueue } from '@/api/queues'
 import type { Queue, QueueStatus } from '@/api/queues'
 import { getDoctors } from '@/api/doctors'
@@ -388,19 +388,22 @@ export default function QueuePage() {
 
         {!isDoctor && (
           <div className="mt-3 pt-3 border-t border-border">
-            <select
-              value={doctorFilter}
-              onChange={handleDoctorFilterChange}
-              className={selectClass}
-              aria-label="Filter dokter"
-            >
-              <option value="">Semua Dokter</option>
-              {doctorsData?.data?.map((doc) => (
-                <option key={doc.id} value={doc.id}>
-                  {doc.name}{doc.specialization ? ` - ${doc.specialization}` : ''}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-muted-foreground" />
+              <select
+                value={doctorFilter}
+                onChange={handleDoctorFilterChange}
+                className={selectClass + ' min-w-[160px]'}
+                aria-label="Filter dokter"
+              >
+                <option value="">Semua Dokter</option>
+                {doctorsData?.data?.map((doc) => (
+                  <option key={doc.id} value={doc.id}>
+                    {doc.name}{doc.specialization ? ` - ${doc.specialization}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         )}
       </div>

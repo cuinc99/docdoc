@@ -15,6 +15,11 @@ import ConsultationPage from '@/pages/ConsultationPage'
 import MedicalRecordsPage from '@/pages/MedicalRecordsPage'
 import MedicalRecordDetailPage from '@/pages/MedicalRecordDetailPage'
 import EditMedicalRecordPage from '@/pages/EditMedicalRecordPage'
+import PrescriptionsPage from '@/pages/PrescriptionsPage'
+import BillingPage from '@/pages/BillingPage'
+import CreateInvoicePage from '@/pages/CreateInvoicePage'
+import InvoiceDetailPage from '@/pages/InvoiceDetailPage'
+import EditInvoicePage from '@/pages/EditInvoicePage'
 
 export function AppRouter() {
   return (
@@ -38,6 +43,11 @@ export function AppRouter() {
               <Route path="/medical-records" element={<MedicalRecordsPage />} />
               <Route path="/medical-records/:id" element={<MedicalRecordDetailPage />} />
               <Route path="/medical-records/:id/edit" element={<EditMedicalRecordPage />} />
+              <Route path="/prescriptions" element={<PrescriptionsPage />} />
+              <Route path="/billing" element={<BillingPage />} />
+              <Route path="/billing/create" element={<CreateInvoicePage />} />
+              <Route path="/billing/:id" element={<InvoiceDetailPage />} />
+              <Route path="/billing/:id/edit" element={<EditInvoicePage />} />
             </Route>
           </Route>
 

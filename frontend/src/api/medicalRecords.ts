@@ -50,6 +50,7 @@ export interface MedicalRecordPayload {
 export interface MedicalRecordListParams {
   patient_id?: number
   doctor_id?: number
+  search?: string
   page?: number
   per_page?: number
 }

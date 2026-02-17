@@ -83,7 +83,7 @@ export default function PatientsPage() {
             className="pl-10"
           />
         </div>
-        <Button type="submit" variant="secondary">Cari</Button>
+        <Button type="submit" variant="outline" size="sm">Cari</Button>
       </form>
 
       <div className="space-y-3">

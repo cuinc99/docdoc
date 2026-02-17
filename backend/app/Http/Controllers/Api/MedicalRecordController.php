@@ -29,6 +29,13 @@ class MedicalRecordController extends Controller
         if ($request->filled('doctor_id')) {
             $query->where('doctor_id', $request->integer('doctor_id'));
         }
+        if ($request->filled('search')) {
+            $search = $request->string('search');
+            $query->whereHas('patient', function ($q) use ($search) {
+                $q->where('name', 'ilike', "%{$search}%")
+                  ->orWhere('mr_number', 'ilike', "%{$search}%");
+            });
+        }
 
         $user = $request->user();
         if ($user->isDoctor()) {
