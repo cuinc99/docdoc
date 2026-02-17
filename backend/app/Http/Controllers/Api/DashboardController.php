@@ -39,13 +39,21 @@ class DashboardController extends Controller
         $monthStart = Carbon::now(self::TIMEZONE)->startOfMonth()->toDateString();
         $monthEnd = Carbon::now(self::TIMEZONE)->endOfMonth()->toDateString();
 
+        $startDate = Carbon::now(self::TIMEZONE)->subDays(29)->toDateString();
+        $endDate = Carbon::now(self::TIMEZONE)->toDateString();
+
+        $visits = Queue::where('status', 'completed')
+            ->whereDate('date', '>=', $startDate)
+            ->whereDate('date', '<=', $endDate)
+            ->selectRaw("date, COUNT(*) as count")
+            ->groupBy('date')
+            ->pluck('count', 'date')
+            ->toArray();
+
         $visitChart = [];
         for ($i = 29; $i >= 0; $i--) {
             $date = Carbon::now(self::TIMEZONE)->subDays($i)->toDateString();
-            $count = Queue::whereDate('date', $date)
-                ->where('status', 'completed')
-                ->count();
-            $visitChart[] = ['date' => $date, 'count' => $count];
+            $visitChart[] = ['date' => $date, 'count' => $visits[$date] ?? 0];
         }
 
         return [

@@ -37,17 +37,7 @@ class UserManagementController extends Controller
 
         $users = $query->orderBy('name')->paginate($request->integer('per_page', 10));
 
-        return response()->json([
-            'data' => $users->items(),
-            'meta' => [
-                'current_page' => $users->currentPage(),
-                'last_page' => $users->lastPage(),
-                'per_page' => $users->perPage(),
-                'total' => $users->total(),
-            ],
-            'message' => 'Success',
-            'errors' => null,
-        ]);
+        return ApiResponse::paginated($users);
     }
 
     public function store(Request $request): JsonResponse

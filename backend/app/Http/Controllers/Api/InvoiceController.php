@@ -28,29 +28,19 @@ class InvoiceController extends Controller
             $query->where('status', $request->string('status'));
         }
         if ($request->filled('search')) {
-            $search = $request->string('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('invoice_number', 'ilike', "%{$search}%")
-                  ->orWhereHas('patient', function ($q2) use ($search) {
-                      $q2->where('name', 'ilike', "%{$search}%")
-                         ->orWhere('mr_number', 'ilike', "%{$search}%");
+            $term = mb_strtolower((string) $request->string('search'));
+            $query->where(function ($q) use ($term) {
+                $q->whereRaw('LOWER(invoice_number) LIKE ?', ["%{$term}%"])
+                  ->orWhereHas('patient', function ($q2) use ($term) {
+                      $q2->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
+                         ->orWhereRaw('LOWER(mr_number) LIKE ?', ["%{$term}%"]);
                   });
             });
         }
 
         $invoices = $query->orderByDesc('created_at')->paginate($request->integer('per_page', 10));
 
-        return response()->json([
-            'data' => InvoiceResource::collection($invoices->items()),
-            'meta' => [
-                'current_page' => $invoices->currentPage(),
-                'last_page' => $invoices->lastPage(),
-                'per_page' => $invoices->perPage(),
-                'total' => $invoices->total(),
-            ],
-            'message' => 'Success',
-            'errors' => null,
-        ]);
+        return ApiResponse::paginated($invoices);
     }
 
     public function show(Invoice $invoice): JsonResponse
@@ -174,7 +164,7 @@ class InvoiceController extends Controller
         return ApiResponse::success(new InvoiceResource($invoice), 'Invoice berhasil dibatalkan');
     }
 
-    public function pdf(Invoice $invoice)
+    public function pdf(Invoice $invoice): \Illuminate\Http\Response
     {
         Gate::authorize('view', $invoice);
 

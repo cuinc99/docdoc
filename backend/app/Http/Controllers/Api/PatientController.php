@@ -23,17 +23,7 @@ class PatientController extends Controller
             ->orderBy('name')
             ->paginate($request->integer('per_page', 10));
 
-        return response()->json([
-            'data' => PatientResource::collection($patients->items()),
-            'meta' => [
-                'current_page' => $patients->currentPage(),
-                'last_page' => $patients->lastPage(),
-                'per_page' => $patients->perPage(),
-                'total' => $patients->total(),
-            ],
-            'message' => 'Success',
-            'errors' => null,
-        ]);
+        return ApiResponse::paginated($patients);
     }
 
     public function store(StorePatientRequest $request): JsonResponse

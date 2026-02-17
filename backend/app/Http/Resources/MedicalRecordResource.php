@@ -26,13 +26,18 @@ class MedicalRecordResource extends JsonResource
             'diagnoses' => $record->diagnoses,
             'is_locked' => $record->is_locked,
             'locked_at' => $record->locked_at?->toISOString(),
-            'patient' => $this->whenLoaded('patient', fn () => [
-                'id' => $record->patient->id,
-                'name' => $record->patient->name,
-                'mr_number' => $record->patient->mr_number,
-                'gender' => $record->patient->gender,
-                'birth_date' => $record->patient->birth_date,
-            ]),
+            'patient' => $this->whenLoaded('patient', function () use ($record) {
+                /** @var \Carbon\Carbon|null $birthDate */
+                $birthDate = $record->patient->birth_date;
+
+                return [
+                    'id' => $record->patient->id,
+                    'name' => $record->patient->name,
+                    'mr_number' => $record->patient->mr_number,
+                    'gender' => $record->patient->gender,
+                    'birth_date' => $birthDate?->format('Y-m-d'),
+                ];
+            }),
             'doctor' => $this->whenLoaded('doctor', fn () => [
                 'id' => $record->doctor->id,
                 'name' => $record->doctor->name,

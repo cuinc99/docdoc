@@ -30,10 +30,10 @@ class MedicalRecordController extends Controller
             $query->where('doctor_id', $request->integer('doctor_id'));
         }
         if ($request->filled('search')) {
-            $search = $request->string('search');
-            $query->whereHas('patient', function ($q) use ($search) {
-                $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('mr_number', 'ilike', "%{$search}%");
+            $term = mb_strtolower((string) $request->string('search'));
+            $query->whereHas('patient', function ($q) use ($term) {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
+                  ->orWhereRaw('LOWER(mr_number) LIKE ?', ["%{$term}%"]);
             });
         }
 
@@ -44,17 +44,7 @@ class MedicalRecordController extends Controller
 
         $records = $query->orderByDesc('created_at')->paginate($request->integer('per_page', 10));
 
-        return response()->json([
-            'data' => MedicalRecordResource::collection($records->items()),
-            'meta' => [
-                'current_page' => $records->currentPage(),
-                'last_page' => $records->lastPage(),
-                'per_page' => $records->perPage(),
-                'total' => $records->total(),
-            ],
-            'message' => 'Success',
-            'errors' => null,
-        ]);
+        return ApiResponse::paginated($records);
     }
 
     public function show(MedicalRecord $medicalRecord): JsonResponse

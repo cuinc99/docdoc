@@ -2,9 +2,9 @@
 
 ## DocDoc: Sistem Manajemen Klinik
 
-**Versi:** 1.2.0
+**Versi:** 1.3.0
 **Tanggal:** 2026-02-17
-**Status:** In Development (Phase 1-7 Complete)
+**Status:** In Development (Phase 1-7.5 Complete)
 
 ---
 
@@ -489,11 +489,24 @@ Pengaturan
 | Layout Desktop | Sidebar kiri + konten utama |
 | Layout Tablet/Mobile | Bottom navigation bar (5 item) + konten utama |
 | Breakpoint | Mobile < 768px, Tablet 768-1023px, Desktop >= 1024px |
-| Pesan error | Bahasa Indonesia |
-| API response | `{ data, message, errors }` format konsisten |
-| Search/Filter UI | Search icon di dalam input (absolute left), tombol "Cari" variant outline, Filter icon + select dropdown |
-| Tombol hapus item | Icon Trash2 + teks "Hapus", border destructive |
+| Pesan error | Bahasa Indonesia (backend default + frontend) |
+| API response | `{ data, message, errors }` format konsisten via `ApiResponse` helper |
+| API response paginated | `{ data, meta, message, errors }` via `ApiResponse::paginated()` |
+| Search/Filter UI | `<SearchBar>` component (search icon di dalam input, tombol "Cari" variant outline) |
+| Filter dropdown | `<Select>` component + `<Filter>` icon |
+| Dialog/Modal | `<Dialog>` component (overlay bg-black/50, escape key, ARIA, X close button) |
+| Konfirmasi destruktif | `<ConfirmDialog>` component (bukan `window.confirm()`) |
+| Form field | `<FormField>` component (label `text-sm font-body font-medium`, required asterisk merah, error `text-sm text-destructive`) |
+| Textarea | `<Textarea>` component (support `aria-invalid`) |
+| Pagination | `<Pagination>` component (chevron prev/next, "Hal X dari Y (Z data)") |
+| Page header | `<PageHeader>` component (support `onBack`, `subtitle`) |
+| Tombol hapus item | Icon Trash2 + teks "Hapus", border destructive, `gap-1.5 py-1.5` |
 | Input number | Gunakan string state untuk mencegah masalah default value tidak bisa diedit |
+| Format Rupiah | `formatRupiah()` dari `@/lib/utils` |
+| Format tanggal | `formatDateId()` dari `@/lib/utils` (timezone Asia/Makassar) |
+| Search backend | `whereRaw('LOWER(...) LIKE ?')` pattern (cross-DB compatible) |
+| Timezone backend | `Carbon::now('Asia/Makassar')` explicit di semua controller |
+| Date serialization | `birth_date` sebagai `Y-m-d` string, datetime sebagai ISO string |
 
 ---
 

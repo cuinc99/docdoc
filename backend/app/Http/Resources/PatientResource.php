@@ -11,13 +11,16 @@ class PatientResource extends JsonResource
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
+        /** @var \Carbon\Carbon|null $birthDate */
+        $birthDate = $this->birth_date;
+
         return [
             'id' => $this->id,
             'mr_number' => $this->mr_number,
             'nik' => $this->nik,
             'name' => $this->name,
             'gender' => $this->gender,
-            'birth_date' => $this->birth_date,
+            'birth_date' => $birthDate?->format('Y-m-d'),
             'phone' => $this->phone,
             'email' => $this->email,
             'address' => $this->address,

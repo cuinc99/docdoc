@@ -32,12 +32,12 @@ class PrescriptionController extends Controller
             $query->where('is_dispensed', $request->boolean('is_dispensed'));
         }
         if ($request->filled('search')) {
-            $search = $request->string('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('prescription_number', 'ilike', "%{$search}%")
-                  ->orWhereHas('patient', function ($q2) use ($search) {
-                      $q2->where('name', 'ilike', "%{$search}%")
-                         ->orWhere('mr_number', 'ilike', "%{$search}%");
+            $term = mb_strtolower((string) $request->string('search'));
+            $query->where(function ($q) use ($term) {
+                $q->whereRaw('LOWER(prescription_number) LIKE ?', ["%{$term}%"])
+                  ->orWhereHas('patient', function ($q2) use ($term) {
+                      $q2->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
+                         ->orWhereRaw('LOWER(mr_number) LIKE ?', ["%{$term}%"]);
                   });
             });
         }
@@ -49,17 +49,7 @@ class PrescriptionController extends Controller
 
         $prescriptions = $query->orderByDesc('created_at')->paginate($request->integer('per_page', 10));
 
-        return response()->json([
-            'data' => PrescriptionResource::collection($prescriptions->items()),
-            'meta' => [
-                'current_page' => $prescriptions->currentPage(),
-                'last_page' => $prescriptions->lastPage(),
-                'per_page' => $prescriptions->perPage(),
-                'total' => $prescriptions->total(),
-            ],
-            'message' => 'Success',
-            'errors' => null,
-        ]);
+        return ApiResponse::paginated($prescriptions);
     }
 
     public function show(Prescription $prescription): JsonResponse
@@ -115,7 +105,7 @@ class PrescriptionController extends Controller
         return ApiResponse::success(new PrescriptionResource($prescription), 'Resep berhasil ditebus');
     }
 
-    public function pdf(Prescription $prescription)
+    public function pdf(Prescription $prescription): \Illuminate\Http\Response
     {
         Gate::authorize('view', $prescription);
 

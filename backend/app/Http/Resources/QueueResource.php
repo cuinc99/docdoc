@@ -30,14 +30,19 @@ class QueueResource extends JsonResource
                 'name' => $queue->doctor->name,
                 'specialization' => $queue->doctor->specialization,
             ]),
-            'patient' => $this->whenLoaded('patient', fn () => [
-                'id' => $queue->patient->id,
-                'name' => $queue->patient->name,
-                'mr_number' => $queue->patient->mr_number,
-                'gender' => $queue->patient->gender,
-                'birth_date' => $queue->patient->birth_date,
-                'phone' => $queue->patient->phone,
-            ]),
+            'patient' => $this->whenLoaded('patient', function () use ($queue) {
+                /** @var \Carbon\Carbon|null $birthDate */
+                $birthDate = $queue->patient->birth_date;
+
+                return [
+                    'id' => $queue->patient->id,
+                    'name' => $queue->patient->name,
+                    'mr_number' => $queue->patient->mr_number,
+                    'gender' => $queue->patient->gender,
+                    'birth_date' => $birthDate?->format('Y-m-d'),
+                    'phone' => $queue->patient->phone,
+                ];
+            }),
             'created_at' => $queue->created_at?->toISOString(),
             'updated_at' => $queue->updated_at?->toISOString(),
         ];

@@ -7,19 +7,22 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreQueueRequest;
 use App\Http\Resources\QueueResource;
 use App\Models\Queue;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class QueueController extends Controller
 {
+    private const TIMEZONE = 'Asia/Makassar';
+
     public function index(Request $request): JsonResponse
     {
         Gate::authorize('viewAny', Queue::class);
 
         $query = Queue::with(['doctor', 'patient']);
 
-        $date = $request->query('date', now()->toDateString());
+        $date = $request->query('date', Carbon::now(self::TIMEZONE)->toDateString());
         $query->whereDate('date', $date);
 
         if ($request->filled('doctor_id')) {
@@ -58,7 +61,7 @@ class QueueController extends Controller
         Gate::authorize('create', Queue::class);
 
         $data = $request->validated();
-        $data['date'] = $data['date'] ?? now()->toDateString();
+        $data['date'] = $data['date'] ?? Carbon::now(self::TIMEZONE)->toDateString();
 
         $queue = Queue::create($data);
         $queue->load(['doctor', 'patient']);
@@ -86,8 +89,8 @@ class QueueController extends Controller
 
         $queue->update([
             'status' => 'in_consultation',
-            'called_at' => now(),
-            'started_at' => now(),
+            'called_at' => Carbon::now(self::TIMEZONE),
+            'started_at' => Carbon::now(self::TIMEZONE),
         ]);
 
         $queue->load(['doctor', 'patient']);
@@ -101,7 +104,7 @@ class QueueController extends Controller
 
         $queue->update([
             'status' => 'completed',
-            'completed_at' => now(),
+            'completed_at' => Carbon::now(self::TIMEZONE),
         ]);
 
         $queue->load(['doctor', 'patient']);
