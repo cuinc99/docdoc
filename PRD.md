@@ -2,9 +2,9 @@
 
 ## DocDoc: Sistem Manajemen Klinik
 
-**Versi:** 1.1.0
+**Versi:** 1.2.0
 **Tanggal:** 2026-02-17
-**Status:** In Development (Phase 1-6 Complete)
+**Status:** In Development (Phase 1-7 Complete)
 
 ---
 

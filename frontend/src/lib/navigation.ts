@@ -2,13 +2,14 @@ import type { Role } from '@/types'
 import {
   LayoutDashboard,
   Users,
-  UserPlus,
+  UserCircle,
   Stethoscope,
   CalendarDays,
   ClipboardList,
   Receipt,
-  Settings,
+  Building2,
   Pill,
+  Briefcase,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -25,11 +26,13 @@ export const sidebarNavItems: NavItem[] = [
   { label: 'Antrian', href: '/queue', icon: ClipboardList, group: 'Pelayanan' },
   { label: 'Rekam Medis', href: '/medical-records', icon: Stethoscope, group: 'Pelayanan', roles: ['admin', 'doctor'] },
   { label: 'Pasien', href: '/patients', icon: Users, group: 'Data' },
-  { label: 'Dokter', href: '/doctors', icon: UserPlus, group: 'Data', roles: ['admin'] },
   { label: 'Jadwal', href: '/schedules', icon: CalendarDays, group: 'Data' },
   { label: 'Resep', href: '/prescriptions', icon: Pill, group: 'Transaksi', roles: ['admin', 'doctor'] },
   { label: 'Billing', href: '/billing', icon: Receipt, group: 'Transaksi', roles: ['admin', 'receptionist'] },
-  { label: 'Pengaturan', href: '/settings', icon: Settings, group: 'Pengaturan', roles: ['admin'] },
+  { label: 'Klinik', href: '/settings/clinic', icon: Building2, group: 'Pengaturan', roles: ['admin'] },
+  { label: 'Staff', href: '/settings/staff', icon: Users, group: 'Pengaturan', roles: ['admin'] },
+  { label: 'Layanan', href: '/settings/services', icon: Briefcase, group: 'Pengaturan', roles: ['admin'] },
+  { label: 'Profil', href: '/profile', icon: UserCircle, group: 'Pengaturan' },
 ]
 
 export const bottomNavItems: NavItem[] = [
@@ -43,8 +46,10 @@ export const moreDrawerItems: NavItem[] = [
   { label: 'Jadwal', href: '/schedules', icon: CalendarDays },
   { label: 'Resep', href: '/prescriptions', icon: Pill, roles: ['admin', 'doctor'] },
   { label: 'Billing', href: '/billing', icon: Receipt, roles: ['admin', 'receptionist'] },
-  { label: 'Dokter', href: '/doctors', icon: UserPlus, roles: ['admin'] },
-  { label: 'Pengaturan', href: '/settings', icon: Settings, roles: ['admin'] },
+  { label: 'Klinik', href: '/settings/clinic', icon: Building2, roles: ['admin'] },
+  { label: 'Staff', href: '/settings/staff', icon: Users, roles: ['admin'] },
+  { label: 'Layanan', href: '/settings/services', icon: Briefcase, roles: ['admin'] },
+  { label: 'Profil', href: '/profile', icon: UserCircle },
 ]
 
 export function filterByRole(items: NavItem[], role: Role): NavItem[] {

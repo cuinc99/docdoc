@@ -195,9 +195,9 @@ export default function CreateInvoicePage() {
 
                 {services.length > 0 && (
                   <div>
-                    <label className="text-xs font-body text-muted-foreground">Pilih Layanan</label>
+                    <label className="text-sm font-body font-medium">Pilih Layanan</label>
                     <select
-                      className={selectClass}
+                      className={selectClass + ' w-full'}
                       onChange={(e) => handleServiceSelect(index, e.target.value)}
                       value=""
                     >
@@ -213,7 +213,7 @@ export default function CreateInvoicePage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div className="sm:col-span-1">
-                    <label className="text-xs font-body text-muted-foreground">Deskripsi *</label>
+                    <label className="text-sm font-body font-medium">Deskripsi *</label>
                     <Input
                       value={item.description}
                       onChange={(e) => handleItemChange(index, 'description', e.target.value)}

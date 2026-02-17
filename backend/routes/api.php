@@ -1,14 +1,18 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ClinicSettingController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\Icd10Controller;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\MedicalRecordController;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PrescriptionController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\QueueController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Api\VitalSignController;
 use Illuminate\Support\Facades\Route;
 
@@ -88,4 +92,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
         return \App\Helpers\ApiResponse::success($doctors);
     });
+
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    Route::get('/settings/clinic', [ClinicSettingController::class, 'index']);
+    Route::put('/settings/clinic', [ClinicSettingController::class, 'update']);
+    Route::post('/settings/clinic/logo', [ClinicSettingController::class, 'uploadLogo']);
+
+    Route::get('/users', [UserManagementController::class, 'index']);
+    Route::post('/users', [UserManagementController::class, 'store']);
+    Route::put('/users/{user}', [UserManagementController::class, 'update']);
+    Route::patch('/users/{user}/toggle-active', [UserManagementController::class, 'toggleActive']);
+
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
 });

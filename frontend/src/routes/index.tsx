@@ -20,6 +20,10 @@ import BillingPage from '@/pages/BillingPage'
 import CreateInvoicePage from '@/pages/CreateInvoicePage'
 import InvoiceDetailPage from '@/pages/InvoiceDetailPage'
 import EditInvoicePage from '@/pages/EditInvoicePage'
+import ClinicSettingsPage from '@/pages/ClinicSettingsPage'
+import StaffPage from '@/pages/StaffPage'
+import ServicesPage from '@/pages/ServicesPage'
+import ProfilePage from '@/pages/ProfilePage'
 
 export function AppRouter() {
   return (
@@ -48,6 +52,10 @@ export function AppRouter() {
               <Route path="/billing/create" element={<CreateInvoicePage />} />
               <Route path="/billing/:id" element={<InvoiceDetailPage />} />
               <Route path="/billing/:id/edit" element={<EditInvoicePage />} />
+              <Route path="/settings/clinic" element={<ClinicSettingsPage />} />
+              <Route path="/settings/staff" element={<StaffPage />} />
+              <Route path="/settings/services" element={<ServicesPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
             </Route>
           </Route>
 
