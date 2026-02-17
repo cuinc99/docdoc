@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Eye, Plus, ChevronLeft, ChevronRight, Filter, Search } from 'lucide-react'
+import { Eye, Plus, Filter } from 'lucide-react'
 import { getInvoices } from '@/api/invoices'
 import { Button } from '@/components/retroui/Button'
-import { Input } from '@/components/retroui/Input'
-import { PageHeader, EmptyState, ActionButton } from '@/components/shared'
-import { formatDateId, selectClass } from '@/lib/utils'
+import { Select } from '@/components/retroui/Select'
+import { PageHeader, EmptyState, ActionButton, SearchBar, Pagination } from '@/components/shared'
+import { formatDateId, formatRupiah } from '@/lib/utils'
 
 const statusLabels: Record<string, string> = {
   pending: 'Belum Dibayar',
@@ -20,10 +20,6 @@ const statusClasses: Record<string, string> = {
   partial: 'bg-blue-50 text-blue-700 border-blue-200',
   paid: 'bg-green-50 text-green-700 border-green-200',
   cancelled: 'bg-red-50 text-red-700 border-red-200',
-}
-
-function formatRupiah(value: string | number) {
-  return 'Rp ' + Number(value).toLocaleString('id-ID')
 }
 
 export default function BillingPage() {
@@ -58,12 +54,6 @@ export default function BillingPage() {
     setPage(1)
   }, [search])
 
-  const handlePrevPage = useCallback(() => setPage((p) => Math.max(1, p - 1)), [])
-  const handleNextPage = useCallback(
-    () => setPage((p) => (meta && p < meta.last_page ? p + 1 : p)),
-    [meta]
-  )
-
   return (
     <div>
       <PageHeader title="Billing">
@@ -73,28 +63,21 @@ export default function BillingPage() {
       </PageHeader>
 
       <div className="mb-4 flex flex-col sm:flex-row gap-3">
-        <form onSubmit={handleSearch} className="flex gap-2 flex-1">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Cari nama pasien atau nomor invoice..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button type="submit" variant="outline" size="sm">Cari</Button>
-        </form>
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          onSearch={handleSearch}
+          placeholder="Cari nama pasien atau nomor invoice..."
+        />
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
-          <select value={statusFilter} onChange={handleFilterChange} className={selectClass + ' min-w-[160px]'}>
+          <Select value={statusFilter} onChange={handleFilterChange} className="min-w-[160px]">
             <option value="all">Semua Status</option>
             <option value="pending">Belum Dibayar</option>
             <option value="partial">Dibayar Sebagian</option>
             <option value="paid">Lunas</option>
             <option value="cancelled">Dibatalkan</option>
-          </select>
+          </Select>
         </div>
       </div>
 
@@ -139,21 +122,7 @@ export default function BillingPage() {
         )}
       </div>
 
-      {meta && meta.last_page > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-muted-foreground font-body">
-            Hal {meta.current_page} dari {meta.last_page} ({meta.total} data)
-          </p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={page <= 1}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleNextPage} disabled={page >= meta.last_page}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      {meta && <Pagination meta={meta} onPageChange={setPage} />}
     </div>
   )
 }

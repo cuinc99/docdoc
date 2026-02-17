@@ -14,10 +14,11 @@ import { Text } from '@/components/retroui/Text'
 import { Button } from '@/components/retroui/Button'
 import { Badge } from '@/components/retroui/Badge'
 import { Input } from '@/components/retroui/Input'
+import { Select } from '@/components/retroui/Select'
 import { useSnackbar } from '@/components/retroui/Snackbar'
 import { AddQueueDialog } from '@/components/queues/AddQueueDialog'
-import { ActionButton } from '@/components/shared'
-import { selectClass, toWitaDateStr, getTodayStr, formatTimeId } from '@/lib/utils'
+import { PageHeader, ActionButton, EmptyState } from '@/components/shared'
+import { toWitaDateStr, getTodayStr, formatTimeId } from '@/lib/utils'
 
 const statusConfig: Record<QueueStatus, { label: string; color: string; dot: string }> = {
   waiting: { label: 'Menunggu', color: 'bg-yellow-100 text-yellow-800', dot: 'bg-yellow-400' },
@@ -336,21 +337,18 @@ export default function QueuePage() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <Text as="h1" className="text-2xl lg:text-3xl">Antrian Pasien</Text>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleRefresh}>
-            <RefreshCw className="w-4 h-4 mr-1" />
-            Refresh
+      <PageHeader title="Antrian Pasien">
+        <Button variant="outline" size="sm" onClick={handleRefresh}>
+          <RefreshCw className="w-4 h-4 mr-1" />
+          Refresh
+        </Button>
+        {canAdd && (
+          <Button onClick={handleOpenAdd}>
+            <Plus className="w-4 h-4 mr-2" />
+            Tambah Antrian
           </Button>
-          {canAdd && (
-            <Button onClick={handleOpenAdd}>
-              <Plus className="w-4 h-4 mr-2" />
-              Tambah Antrian
-            </Button>
-          )}
-        </div>
-      </div>
+        )}
+      </PageHeader>
 
       <div className="border-2 border-border p-4 shadow-md mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -390,10 +388,10 @@ export default function QueuePage() {
           <div className="mt-3 pt-3 border-t border-border">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-muted-foreground" />
-              <select
+              <Select
                 value={doctorFilter}
                 onChange={handleDoctorFilterChange}
-                className={selectClass + ' min-w-[160px]'}
+                className="min-w-[160px]"
                 aria-label="Filter dokter"
               >
                 <option value="">Semua Dokter</option>
@@ -402,7 +400,7 @@ export default function QueuePage() {
                     {doc.name}{doc.specialization ? ` - ${doc.specialization}` : ''}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
         )}
@@ -440,21 +438,9 @@ export default function QueuePage() {
       </div>
 
       {isLoading ? (
-        <div className="border-2 border-border p-12 text-center text-muted-foreground font-body">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 opacity-50" />
-          Memuat data antrian...
-        </div>
+        <EmptyState loading message="" />
       ) : queues.length === 0 ? (
-        <div className="border-2 border-border p-12 text-center">
-          <Users className="w-8 h-8 mx-auto mb-2 text-muted-foreground opacity-50" />
-          <p className="text-muted-foreground font-body">Belum ada antrian pada tanggal ini</p>
-          {canAdd && (
-            <Button variant="outline" size="sm" onClick={handleOpenAdd} className="mt-3">
-              <Plus className="w-4 h-4 mr-1" />
-              Tambah Antrian Pertama
-            </Button>
-          )}
-        </div>
+        <EmptyState message="Belum ada antrian pada tanggal ini" />
       ) : (
         <div className="space-y-6">
           {statusOrder.map((status) => {

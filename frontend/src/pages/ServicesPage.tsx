@@ -4,21 +4,18 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { AxiosError } from 'axios'
-import { Plus, X } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { getServices, createService, updateService } from '@/api/services'
 import type { Service } from '@/api/services'
 import type { ApiResponse } from '@/types'
 import { useAuth } from '@/hooks/useAuth'
-import { Text } from '@/components/retroui/Text'
 import { Button } from '@/components/retroui/Button'
 import { Input } from '@/components/retroui/Input'
 import { Badge } from '@/components/retroui/Badge'
-import { PageHeader, EmptyState } from '@/components/shared'
+import { Dialog } from '@/components/retroui/Dialog'
+import { PageHeader, EmptyState, FormField } from '@/components/shared'
 import { useSnackbar } from '@/components/retroui/Snackbar'
-
-function formatRupiah(value: string | number) {
-  return 'Rp ' + Number(value).toLocaleString('id-ID')
-}
+import { formatRupiah } from '@/lib/utils'
 
 const serviceSchema = z.object({
   name: z.string().min(1, 'Nama layanan wajib diisi'),
@@ -78,63 +75,27 @@ function ServiceDialog({ open, onClose, service }: ServiceDialogProps) {
     [mutation]
   )
 
-  useEffect(() => {
-    if (!open) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [open, onClose])
-
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={isEdit ? 'Edit Layanan' : 'Tambah Layanan'}
-        className="relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto bg-background border-2 border-border shadow-lg p-6 overscroll-contain"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <Text as="h2" className="text-xl">
-            {isEdit ? 'Edit Layanan' : 'Tambah Layanan Baru'}
-          </Text>
-          <button
-            onClick={onClose}
-            className="p-1.5 border-2 border-border hover:bg-accent transition-colors cursor-pointer"
-            aria-label="Tutup"
-          >
-            <X className="w-4 h-4" />
-          </button>
+    <Dialog open={open} onClose={onClose} title={isEdit ? 'Edit Layanan' : 'Tambah Layanan Baru'} maxWidth="max-w-md">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <FormField label="Nama Layanan" required error={errors.name?.message}>
+          <Input {...register('name')} placeholder="Nama layanan" />
+        </FormField>
+
+        <FormField label="Harga (Rp)" required error={errors.price?.message}>
+          <Input {...register('price', { valueAsNumber: true })} type="number" min={0} placeholder="0" />
+        </FormField>
+
+        <div className="flex justify-end gap-3 pt-2">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Batal
+          </Button>
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Tambah Layanan'}
+          </Button>
         </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="text-sm font-body font-medium">Nama Layanan *</label>
-            <Input {...register('name')} placeholder="Nama layanan" />
-            {errors.name && <p className="text-sm text-destructive font-body mt-1">{errors.name.message}</p>}
-          </div>
-
-          <div>
-            <label className="text-sm font-body font-medium">Harga (Rp) *</label>
-            <Input {...register('price', { valueAsNumber: true })} type="number" min={0} placeholder="0" />
-            {errors.price && <p className="text-sm text-destructive font-body mt-1">{errors.price.message}</p>}
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Batal
-            </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Tambah Layanan'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Dialog>
   )
 }
 

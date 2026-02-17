@@ -11,7 +11,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { Text } from '@/components/retroui/Text'
 import { Button } from '@/components/retroui/Button'
 import { Input } from '@/components/retroui/Input'
-import { PageHeader, EmptyState } from '@/components/shared'
+import { Textarea } from '@/components/retroui/Textarea'
+import { PageHeader, EmptyState, FormField } from '@/components/shared'
 import { useSnackbar } from '@/components/retroui/Snackbar'
 
 const schema = z.object({
@@ -145,36 +146,25 @@ export default function ClinicSettingsPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="border-2 border-border p-4 shadow-md space-y-4">
             <Text as="h2" className="text-lg">Informasi Klinik</Text>
 
-            <div>
-              <label className="text-sm font-body font-medium">Nama Klinik *</label>
+            <FormField label="Nama Klinik" required error={errors.clinic_name?.message}>
               <Input {...register('clinic_name')} placeholder="Nama klinik" />
-              {errors.clinic_name && (
-                <p className="text-sm text-destructive font-body mt-1">{errors.clinic_name.message}</p>
-              )}
-            </div>
+            </FormField>
 
-            <div>
-              <label className="text-sm font-body font-medium">Alamat</label>
-              <textarea
+            <FormField label="Alamat">
+              <Textarea
                 {...register('clinic_address')}
                 rows={3}
                 placeholder="Alamat klinik"
-                className="w-full px-4 py-2 border-2 border-border shadow-md transition focus:outline-hidden focus:shadow-xs focus-visible:ring-2 focus-visible:ring-ring font-body bg-background"
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label className="text-sm font-body font-medium">Telepon</label>
+            <FormField label="Telepon">
               <Input {...register('clinic_phone')} placeholder="Nomor telepon" />
-            </div>
+            </FormField>
 
-            <div>
-              <label className="text-sm font-body font-medium">Email</label>
+            <FormField label="Email" error={errors.clinic_email?.message}>
               <Input {...register('clinic_email')} type="email" placeholder="Email klinik" />
-              {errors.clinic_email && (
-                <p className="text-sm text-destructive font-body mt-1">{errors.clinic_email.message}</p>
-              )}
-            </div>
+            </FormField>
 
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => reset()}>

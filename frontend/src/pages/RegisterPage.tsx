@@ -63,7 +63,7 @@ export default function RegisterPage() {
                 {...register('name')}
               />
               {errors.name && (
-                <p className="text-destructive text-sm mt-1">{errors.name.message}</p>
+                <p className="text-destructive text-sm mt-1 font-body">{errors.name.message}</p>
               )}
             </div>
             <div>
@@ -77,7 +77,7 @@ export default function RegisterPage() {
                 {...register('email')}
               />
               {errors.email && (
-                <p className="text-destructive text-sm mt-1">{errors.email.message}</p>
+                <p className="text-destructive text-sm mt-1 font-body">{errors.email.message}</p>
               )}
             </div>
             <div>
@@ -90,7 +90,7 @@ export default function RegisterPage() {
                 {...register('phone')}
               />
               {errors.phone && (
-                <p className="text-destructive text-sm mt-1">{errors.phone.message}</p>
+                <p className="text-destructive text-sm mt-1 font-body">{errors.phone.message}</p>
               )}
             </div>
             <div>
@@ -104,7 +104,7 @@ export default function RegisterPage() {
                 {...register('password')}
               />
               {errors.password && (
-                <p className="text-destructive text-sm mt-1">{errors.password.message}</p>
+                <p className="text-destructive text-sm mt-1 font-body">{errors.password.message}</p>
               )}
             </div>
             <div>
@@ -118,7 +118,7 @@ export default function RegisterPage() {
                 {...register('password_confirmation')}
               />
               {errors.password_confirmation && (
-                <p className="text-destructive text-sm mt-1">{errors.password_confirmation.message}</p>
+                <p className="text-destructive text-sm mt-1 font-body">{errors.password_confirmation.message}</p>
               )}
             </div>
             <Button type="submit" className="w-full justify-center" disabled={isRegisterLoading}>

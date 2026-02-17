@@ -1,16 +1,16 @@
 import { useState, useCallback } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, Search, Eye, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Eye, Pencil, Trash2 } from 'lucide-react'
 import { getPatients } from '@/api/patients'
 import type { Patient } from '@/api/patients'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/retroui/Button'
-import { Input } from '@/components/retroui/Input'
 import { Badge } from '@/components/retroui/Badge'
 import { PatientDialog } from '@/components/patients/PatientDialog'
 import { DeletePatientDialog } from '@/components/patients/DeletePatientDialog'
-import { PageHeader, EmptyState, ActionButton } from '@/components/shared'
+import { PageHeader, EmptyState, ActionButton, SearchBar, Pagination } from '@/components/shared'
+import { formatDateId } from '@/lib/utils'
 
 export default function PatientsPage() {
   const { user } = useAuth()
@@ -41,11 +41,6 @@ export default function PatientsPage() {
     [searchInput, setSearchParams]
   )
 
-  const handleSearchInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => setSearchInput(e.target.value),
-    []
-  )
-
   const handlePageChange = useCallback(
     (newPage: number) => {
       const params: Record<string, string> = { page: String(newPage) }
@@ -64,7 +59,7 @@ export default function PatientsPage() {
 
   return (
     <div>
-      <PageHeader title="Daftar Pasien">
+      <PageHeader title="Pasien">
         {canCreate && (
           <Button onClick={handleOpenCreate}>
             <Plus className="w-4 h-4 mr-2" />
@@ -73,18 +68,14 @@ export default function PatientsPage() {
         )}
       </PageHeader>
 
-      <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Cari nama, NIK, No MR, atau telepon..."
-            value={searchInput}
-            onChange={handleSearchInputChange}
-            className="pl-10"
-          />
-        </div>
-        <Button type="submit" variant="outline" size="sm">Cari</Button>
-      </form>
+      <div className="mb-4">
+        <SearchBar
+          value={searchInput}
+          onChange={(v) => setSearchInput(v)}
+          onSearch={handleSearch}
+          placeholder="Cari nama, NIK, No MR, atau telepon..."
+        />
+      </div>
 
       <div className="space-y-3">
         {isLoading ? (
@@ -108,7 +99,7 @@ export default function PatientsPage() {
                 <p className="text-sm text-muted-foreground font-body">
                   NIK: {patient.nik}
                   {patient.phone ? ` · ${patient.phone}` : ''}
-                  {patient.birth_date ? ` · ${new Date(patient.birth_date + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                  {patient.birth_date ? ` · ${formatDateId(patient.birth_date)}` : ''}
                   {patient.address ? ` · ${patient.address}` : ''}
                 </p>
               </div>
@@ -139,51 +130,7 @@ export default function PatientsPage() {
         )}
       </div>
 
-      {data?.meta && data.meta.last_page > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
-          <p className="text-sm text-muted-foreground font-body">
-            Menampilkan {data.data.length} dari {data.meta.total} pasien
-          </p>
-          <div className="flex gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={data.meta.current_page <= 1}
-              onClick={() => handlePageChange(data.meta.current_page - 1)}
-            >
-              Sebelumnya
-            </Button>
-            {Array.from({ length: data.meta.last_page }, (_, i) => i + 1)
-              .filter((p) => {
-                const current = data.meta.current_page
-                return p === 1 || p === data.meta.last_page || Math.abs(p - current) <= 1
-              })
-              .map((p, idx, arr) => {
-                const showEllipsis = idx > 0 && p - arr[idx - 1] > 1
-                return (
-                  <span key={p} className="flex items-center">
-                    {showEllipsis && <span className="px-2 text-muted-foreground font-body">...</span>}
-                    <Button
-                      variant={p === data.meta.current_page ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handlePageChange(p)}
-                    >
-                      {p}
-                    </Button>
-                  </span>
-                )
-              })}
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={data.meta.current_page >= data.meta.last_page}
-              onClick={() => handlePageChange(data.meta.current_page + 1)}
-            >
-              Selanjutnya
-            </Button>
-          </div>
-        </div>
-      )}
+      {data?.meta && <Pagination meta={data.meta} onPageChange={handlePageChange} />}
 
       <PatientDialog open={createOpen} onClose={handleCloseCreate} />
       <PatientDialog

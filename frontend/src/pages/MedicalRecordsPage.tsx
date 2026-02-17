@@ -1,12 +1,10 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Eye, Lock, Unlock, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { Eye, Lock, Unlock } from 'lucide-react'
 import { getMedicalRecords } from '@/api/medicalRecords'
 import { useAuth } from '@/hooks/useAuth'
-import { Button } from '@/components/retroui/Button'
-import { Input } from '@/components/retroui/Input'
-import { PageHeader, EmptyState, ActionButton } from '@/components/shared'
+import { PageHeader, EmptyState, ActionButton, SearchBar, Pagination } from '@/components/shared'
 import { formatDateId } from '@/lib/utils'
 
 export default function MedicalRecordsPage() {
@@ -44,12 +42,6 @@ export default function MedicalRecordsPage() {
     [search]
   )
 
-  const handlePrevPage = useCallback(() => setPage((p) => Math.max(1, p - 1)), [])
-  const handleNextPage = useCallback(
-    () => setPage((p) => (meta && p < meta.last_page ? p + 1 : p)),
-    [meta]
-  )
-
   const getPrimaryDiagnosis = (diagnoses: Array<{ code: string; description: string; is_primary: boolean }>) => {
     const primary = diagnoses.find((d) => d.is_primary)
     return primary ? `${primary.code} - ${primary.description}` : diagnoses[0]?.code ?? '-'
@@ -59,19 +51,14 @@ export default function MedicalRecordsPage() {
     <div>
       <PageHeader title="Rekam Medis" />
 
-      <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Cari pasien (nama / no. RM)..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Button type="submit" variant="outline" size="sm">Cari</Button>
-      </form>
+      <div className="mb-4">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          onSearch={handleSearch}
+          placeholder="Cari pasien (nama / no. RM)..."
+        />
+      </div>
 
       <div className="space-y-3">
         {isLoading ? (
@@ -115,21 +102,7 @@ export default function MedicalRecordsPage() {
         )}
       </div>
 
-      {meta && meta.last_page > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-muted-foreground font-body">
-            Hal {meta.current_page} dari {meta.last_page} ({meta.total} data)
-          </p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={page <= 1}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleNextPage} disabled={page >= meta.last_page}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      {meta && <Pagination meta={meta} onPageChange={setPage} />}
     </div>
   )
 }

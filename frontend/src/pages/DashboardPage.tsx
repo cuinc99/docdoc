@@ -24,12 +24,8 @@ import type { AdminDashboard, DoctorDashboard, ReceptionistDashboard } from '@/a
 import { useAuth } from '@/hooks/useAuth'
 import { Text } from '@/components/retroui/Text'
 import { EmptyState } from '@/components/shared'
-import { formatDateId } from '@/lib/utils'
+import { formatDateId, formatRupiah } from '@/lib/utils'
 import type { LucideIcon } from 'lucide-react'
-
-function formatRupiah(value: string | number) {
-  return 'Rp ' + Number(value).toLocaleString('id-ID')
-}
 
 interface StatCardProps {
   icon: LucideIcon

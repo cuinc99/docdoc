@@ -46,3 +46,7 @@ export function toWitaDateStr(d: Date = new Date()): string {
 export function getTodayStr(): string {
   return toWitaDateStr()
 }
+
+export function formatRupiah(value: string | number): string {
+  return 'Rp ' + Number(value).toLocaleString('id-ID')
+}

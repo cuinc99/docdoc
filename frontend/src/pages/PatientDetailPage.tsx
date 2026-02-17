@@ -1,12 +1,12 @@
 import { useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Phone, Mail, MapPin, Droplets, AlertTriangle, UserCheck } from 'lucide-react'
+import { Phone, Mail, MapPin, Droplets, AlertTriangle, UserCheck } from 'lucide-react'
 import { getPatient } from '@/api/patients'
-import { Text } from '@/components/retroui/Text'
 import { Button } from '@/components/retroui/Button'
 import { Card } from '@/components/retroui/Card'
 import { Badge } from '@/components/retroui/Badge'
+import { PageHeader, EmptyState } from '@/components/shared'
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('id-ID', {
@@ -40,11 +40,7 @@ export default function PatientDetailPage() {
   const birthDateFormatted = patient ? formatDate(patient.birth_date) : ''
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground font-body">Memuat data pasien...</p>
-      </div>
-    )
+    return <EmptyState loading message="" />
   }
 
   if (isError || !patient) {
@@ -52,7 +48,6 @@ export default function PatientDetailPage() {
       <div className="flex flex-col items-center justify-center py-12 gap-4">
         <p className="text-muted-foreground font-body">Pasien tidak ditemukan</p>
         <Button variant="outline" onClick={handleBack}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
           Kembali
         </Button>
       </div>
@@ -61,15 +56,11 @@ export default function PatientDetailPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="outline" size="sm" onClick={handleBack} aria-label="Kembali ke daftar pasien">
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <div>
-          <Text as="h1" className="text-2xl lg:text-3xl">{patient.name}</Text>
-          <p className="text-sm text-muted-foreground font-body font-mono">{patient.mr_number}</p>
-        </div>
-      </div>
+      <PageHeader
+        title={patient.name}
+        subtitle={patient.mr_number}
+        onBack={handleBack}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="w-full">

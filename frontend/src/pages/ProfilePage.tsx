@@ -9,7 +9,7 @@ import type { ApiResponse } from '@/types'
 import { Text } from '@/components/retroui/Text'
 import { Button } from '@/components/retroui/Button'
 import { Input } from '@/components/retroui/Input'
-import { PageHeader, EmptyState } from '@/components/shared'
+import { PageHeader, EmptyState, FormField } from '@/components/shared'
 import { useSnackbar } from '@/components/retroui/Snackbar'
 
 const profileSchema = z.object({
@@ -114,18 +114,13 @@ export default function ProfilePage() {
           >
             <Text as="h2" className="text-lg">Informasi Profil</Text>
 
-            <div>
-              <label className="text-sm font-body font-medium">Nama *</label>
+            <FormField label="Nama" required error={profileErrors.name?.message}>
               <Input {...registerProfile('name')} placeholder="Nama lengkap" />
-              {profileErrors.name && (
-                <p className="text-sm text-destructive font-body mt-1">{profileErrors.name.message}</p>
-              )}
-            </div>
+            </FormField>
 
-            <div>
-              <label className="text-sm font-body font-medium">Telepon</label>
+            <FormField label="Telepon">
               <Input {...registerProfile('phone')} placeholder="Nomor telepon" />
-            </div>
+            </FormField>
 
             <div className="flex justify-end">
               <Button type="submit" disabled={profileMutation.isPending}>
@@ -140,29 +135,17 @@ export default function ProfilePage() {
           >
             <Text as="h2" className="text-lg">Ubah Password</Text>
 
-            <div>
-              <label className="text-sm font-body font-medium">Password Saat Ini *</label>
+            <FormField label="Password Saat Ini" required error={passwordErrors.current_password?.message}>
               <Input {...registerPassword('current_password')} type="password" placeholder="Password saat ini" />
-              {passwordErrors.current_password && (
-                <p className="text-sm text-destructive font-body mt-1">{passwordErrors.current_password.message}</p>
-              )}
-            </div>
+            </FormField>
 
-            <div>
-              <label className="text-sm font-body font-medium">Password Baru *</label>
+            <FormField label="Password Baru" required error={passwordErrors.password?.message}>
               <Input {...registerPassword('password')} type="password" placeholder="Minimal 8 karakter" />
-              {passwordErrors.password && (
-                <p className="text-sm text-destructive font-body mt-1">{passwordErrors.password.message}</p>
-              )}
-            </div>
+            </FormField>
 
-            <div>
-              <label className="text-sm font-body font-medium">Konfirmasi Password Baru *</label>
+            <FormField label="Konfirmasi Password Baru" required error={passwordErrors.password_confirmation?.message}>
               <Input {...registerPassword('password_confirmation')} type="password" placeholder="Ulangi password baru" />
-              {passwordErrors.password_confirmation && (
-                <p className="text-sm text-destructive font-body mt-1">{passwordErrors.password_confirmation.message}</p>
-              )}
-            </div>
+            </FormField>
 
             <div className="flex justify-end">
               <Button type="submit" disabled={passwordMutation.isPending}>

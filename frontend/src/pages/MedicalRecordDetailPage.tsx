@@ -1,16 +1,18 @@
 import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Lock, Unlock, Plus, Edit, Star, Trash2 } from 'lucide-react'
+import { Lock, Unlock, Plus, Edit, Star, Trash2 } from 'lucide-react'
 import type { AxiosError } from 'axios'
 import type { ApiResponse } from '@/types'
 import { getMedicalRecord, createAddendum, updateAddendum, deleteAddendum } from '@/api/medicalRecords'
 import { useAuth } from '@/hooks/useAuth'
-import { Text } from '@/components/retroui/Text'
 import { Button } from '@/components/retroui/Button'
 import { Badge } from '@/components/retroui/Badge'
 import { Card } from '@/components/retroui/Card'
+import { Textarea } from '@/components/retroui/Textarea'
+import { Dialog } from '@/components/retroui/Dialog'
 import { useSnackbar } from '@/components/retroui/Snackbar'
+import { PageHeader, EmptyState, ConfirmDialog } from '@/components/shared'
 
 const TIMEZONE = 'Asia/Makassar'
 
@@ -36,6 +38,7 @@ export default function MedicalRecordDetailPage() {
   const [addendumContent, setAddendumContent] = useState('')
   const [editingAddendumId, setEditingAddendumId] = useState<number | null>(null)
   const [editingAddendumContent, setEditingAddendumContent] = useState('')
+  const [deleteAddendumId, setDeleteAddendumId] = useState<number | null>(null)
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['medical-record', id],
@@ -80,6 +83,7 @@ export default function MedicalRecordDetailPage() {
     onSuccess: (res) => {
       showSnackbar(res.message, 'success')
       queryClient.invalidateQueries({ queryKey: ['medical-record', id] })
+      setDeleteAddendumId(null)
     },
     onError: (error: AxiosError<ApiResponse>) => {
       showSnackbar(error.response?.data?.message || 'Gagal menghapus addendum', 'error')
@@ -110,11 +114,7 @@ export default function MedicalRecordDetailPage() {
   }, [])
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground font-body">Memuat data...</p>
-      </div>
-    )
+    return <EmptyState loading message="" />
   }
 
   if (isError || !record) {
@@ -122,7 +122,6 @@ export default function MedicalRecordDetailPage() {
       <div className="flex flex-col items-center justify-center py-12 gap-4">
         <p className="text-muted-foreground font-body">Rekam medis tidak ditemukan</p>
         <Button variant="outline" onClick={handleBack}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
           Kembali
         </Button>
       </div>
@@ -133,18 +132,11 @@ export default function MedicalRecordDetailPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={handleBack} aria-label="Kembali">
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <Text as="h1" className="text-2xl lg:text-3xl">Detail Rekam Medis</Text>
-            <p className="text-sm text-muted-foreground font-body">
-              {record.patient?.name} ({record.patient?.mr_number})
-            </p>
-          </div>
-        </div>
+      <PageHeader
+        title="Detail Rekam Medis"
+        subtitle={`${record.patient?.name} (${record.patient?.mr_number})`}
+        onBack={handleBack}
+      >
         <div className="flex items-center gap-2">
           {record.is_locked ? (
             <Badge className="bg-gray-100 text-gray-600">
@@ -156,7 +148,7 @@ export default function MedicalRecordDetailPage() {
             </Badge>
           )}
         </div>
-      </div>
+      </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <Card className="w-full">
@@ -300,7 +292,7 @@ export default function MedicalRecordDetailPage() {
                             <Edit className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={() => { if (confirm('Hapus addendum ini?')) deleteAddendumMutation.mutate(a.id) }}
+                            onClick={() => setDeleteAddendumId(a.id)}
                             className="p-1 text-muted-foreground hover:text-destructive cursor-pointer"
                             title="Hapus Addendum"
                           >
@@ -311,8 +303,8 @@ export default function MedicalRecordDetailPage() {
                     </div>
                     {editingAddendumId === a.id ? (
                       <div className="mt-2">
-                        <textarea
-                          className="px-3 py-2 w-full rounded border-2 shadow-md transition focus:outline-hidden focus:shadow-xs font-body min-h-[80px] resize-y mb-2"
+                        <Textarea
+                          className="min-h-[80px] mb-2"
                           value={editingAddendumContent}
                           onChange={(e) => setEditingAddendumContent(e.target.value)}
                         />
@@ -355,38 +347,37 @@ export default function MedicalRecordDetailPage() {
         )}
       </div>
 
-      {addendumOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/50" onClick={handleCloseAddendum} />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Tambah Addendum"
-            className="relative z-10 w-full max-w-lg bg-background border-2 border-border shadow-lg p-6"
-          >
-            <Text as="h2" className="text-xl mb-2">Tambah Addendum</Text>
-            {record.is_locked && (
-              <p className="text-sm text-muted-foreground font-body mb-4">
-                Rekam medis ini sudah terkunci. Anda hanya bisa menambah addendum.
-              </p>
-            )}
-            <textarea
-              className="px-4 py-2 w-full rounded border-2 shadow-md transition focus:outline-hidden focus:shadow-xs font-body min-h-[120px] resize-y mb-4"
-              placeholder="Tulis addendum..."
-              value={addendumContent}
-              onChange={handleAddendumChange}
-            />
-            <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={handleCloseAddendum}>
-                Batal
-              </Button>
-              <Button onClick={handleSubmitAddendum} disabled={addendumMutation.isPending}>
-                {addendumMutation.isPending ? 'Menyimpan...' : 'Simpan Addendum'}
-              </Button>
-            </div>
-          </div>
+      <Dialog open={addendumOpen} onClose={handleCloseAddendum} title="Tambah Addendum">
+        {record.is_locked && (
+          <p className="text-sm text-muted-foreground font-body mb-4">
+            Rekam medis ini sudah terkunci. Anda hanya bisa menambah addendum.
+          </p>
+        )}
+        <Textarea
+          className="min-h-[120px] mb-4"
+          placeholder="Tulis addendum..."
+          value={addendumContent}
+          onChange={handleAddendumChange}
+        />
+        <div className="flex justify-end gap-3">
+          <Button type="button" variant="outline" onClick={handleCloseAddendum}>
+            Batal
+          </Button>
+          <Button onClick={handleSubmitAddendum} disabled={addendumMutation.isPending}>
+            {addendumMutation.isPending ? 'Menyimpan...' : 'Simpan Addendum'}
+          </Button>
         </div>
-      )}
+      </Dialog>
+
+      <ConfirmDialog
+        open={deleteAddendumId !== null}
+        onClose={() => setDeleteAddendumId(null)}
+        onConfirm={() => { if (deleteAddendumId) deleteAddendumMutation.mutate(deleteAddendumId) }}
+        title="Hapus Addendum"
+        message="Apakah Anda yakin ingin menghapus addendum ini?"
+        confirmLabel="Hapus"
+        isPending={deleteAddendumMutation.isPending}
+      />
     </div>
   )
 }

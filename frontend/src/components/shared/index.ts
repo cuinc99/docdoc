@@ -1,3 +1,7 @@
 export { PageHeader } from './PageHeader'
 export { EmptyState } from './EmptyState'
 export { ActionButton } from './ActionButton'
+export { ConfirmDialog } from './ConfirmDialog'
+export { FormField } from './FormField'
+export { Pagination } from './Pagination'
+export { SearchBar } from './SearchBar'

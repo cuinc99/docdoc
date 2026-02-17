@@ -1,13 +1,16 @@
 import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Download, XCircle, Plus, Pencil } from 'lucide-react'
+import { Download, XCircle, Plus, Pencil } from 'lucide-react'
 import { getInvoice, addPayment, cancelInvoice, downloadInvoicePdf } from '@/api/invoices'
 import { Text } from '@/components/retroui/Text'
 import { Button } from '@/components/retroui/Button'
 import { Input } from '@/components/retroui/Input'
+import { Select } from '@/components/retroui/Select'
+import { Dialog } from '@/components/retroui/Dialog'
 import { useSnackbar } from '@/components/retroui/Snackbar'
-import { formatDateTimeId, selectClass } from '@/lib/utils'
+import { PageHeader, EmptyState, ConfirmDialog, FormField } from '@/components/shared'
+import { formatDateTimeId, formatRupiah } from '@/lib/utils'
 import type { AxiosError } from 'axios'
 import type { ApiResponse } from '@/types'
 
@@ -23,10 +26,6 @@ const statusClasses: Record<string, string> = {
   partial: 'bg-blue-50 text-blue-700 border-blue-200',
   paid: 'bg-green-50 text-green-700 border-green-200',
   cancelled: 'bg-red-50 text-red-700 border-red-200',
-}
-
-function formatRupiah(value: string | number) {
-  return 'Rp ' + Number(value).toLocaleString('id-ID')
 }
 
 export default function InvoiceDetailPage() {
@@ -107,22 +106,11 @@ export default function InvoiceDetailPage() {
   const handleBack = useCallback(() => navigate('/billing'), [navigate])
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground font-body">Memuat data...</p>
-      </div>
-    )
+    return <EmptyState loading message="" />
   }
 
   if (!invoice) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 gap-4">
-        <p className="text-muted-foreground font-body">Invoice tidak ditemukan</p>
-        <Button variant="outline" onClick={handleBack}>
-          <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
-        </Button>
-      </div>
-    )
+    return <EmptyState message="Invoice tidak ditemukan" />
   }
 
   const remaining = Math.max(0, Number(invoice.total) - Number(invoice.paid_amount))
@@ -131,22 +119,15 @@ export default function InvoiceDetailPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="outline" size="sm" onClick={handleBack} aria-label="Kembali">
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Text as="h1" className="text-2xl lg:text-3xl">{invoice.invoice_number}</Text>
-            <span className={`inline-flex items-center text-xs font-body px-2 py-0.5 rounded border ${statusClasses[invoice.status]}`}>
-              {statusLabels[invoice.status]}
-            </span>
-          </div>
-          <p className="text-sm text-muted-foreground font-body">
-            {invoice.patient?.name} ({invoice.patient?.mr_number})
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title={invoice.invoice_number}
+        subtitle={`${invoice.patient?.name} (${invoice.patient?.mr_number})`}
+        onBack={handleBack}
+      >
+        <span className={`inline-flex items-center text-xs font-body px-2 py-0.5 rounded border ${statusClasses[invoice.status]}`}>
+          {statusLabels[invoice.status]}
+        </span>
+      </PageHeader>
 
       <div className="space-y-6">
         <div className="border-2 border-border p-4 shadow-md">
@@ -260,89 +241,64 @@ export default function InvoiceDetailPage() {
         </div>
       </div>
 
-      {showPaymentForm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowPaymentForm(false)}>
-          <div
-            className="bg-background border-2 border-border shadow-lg p-6 max-w-sm w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Text as="h2" className="text-lg mb-4">Tambah Pembayaran</Text>
-            <form onSubmit={handlePaymentSubmit} className="space-y-3">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-sm font-body font-medium">Jumlah (max: {formatRupiah(remaining)}) *</label>
-                  <button
-                    type="button"
-                    className="text-xs font-body text-primary hover:underline cursor-pointer"
-                    onClick={() => setPaymentAmount(String(remaining))}
-                  >
-                    Bayar Semua
-                  </button>
-                </div>
-                <Input
-                  type="number"
-                  min={1}
-                  max={remaining}
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
-                  placeholder="Jumlah pembayaran"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-body font-medium">Metode *</label>
-                <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className={selectClass}>
-                  <option value="cash">Tunai</option>
-                  <option value="transfer">Transfer</option>
-                </select>
-              </div>
-              {paymentMethod === 'transfer' && (
-                <div>
-                  <label className="text-sm font-body font-medium">Referensi</label>
-                  <Input
-                    value={paymentReference}
-                    onChange={(e) => setPaymentReference(e.target.value)}
-                    placeholder="No. referensi transfer"
-                  />
-                </div>
-              )}
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => setShowPaymentForm(false)}>
-                  Batal
-                </Button>
-                <Button type="submit" size="sm" disabled={paymentMutation.isPending}>
-                  {paymentMutation.isPending ? 'Memproses...' : 'Bayar'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showCancelConfirm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowCancelConfirm(false)}>
-          <div
-            className="bg-background border-2 border-border shadow-lg p-6 max-w-sm w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="font-heading font-medium mb-2">Batalkan Invoice?</p>
-            <p className="text-sm text-muted-foreground font-body mb-4">
-              Invoice yang dibatalkan tidak dapat dikembalikan. Lanjutkan?
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowCancelConfirm(false)}>
-                Tidak
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => cancelMutation.mutate()}
-                disabled={cancelMutation.isPending}
+      <Dialog open={showPaymentForm} onClose={() => setShowPaymentForm(false)} title="Tambah Pembayaran" maxWidth="max-w-sm">
+        <form onSubmit={handlePaymentSubmit} className="space-y-3">
+          <FormField label={`Jumlah (max: ${formatRupiah(remaining)})`} required>
+            <div className="flex items-center justify-between mb-1">
+              <button
+                type="button"
+                className="text-xs font-body text-primary hover:underline cursor-pointer"
+                onClick={() => setPaymentAmount(String(remaining))}
               >
-                {cancelMutation.isPending ? 'Memproses...' : 'Ya, Batalkan'}
-              </Button>
+                Bayar Semua
+              </button>
             </div>
+            <Input
+              type="number"
+              min={1}
+              max={remaining}
+              value={paymentAmount}
+              onChange={(e) => setPaymentAmount(e.target.value)}
+              placeholder="Jumlah pembayaran"
+            />
+          </FormField>
+          <FormField label="Metode" required>
+            <Select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full">
+              <option value="cash">Tunai</option>
+              <option value="transfer">Transfer</option>
+            </Select>
+          </FormField>
+          {paymentMethod === 'transfer' && (
+            <FormField label="Referensi">
+              <Input
+                value={paymentReference}
+                onChange={(e) => setPaymentReference(e.target.value)}
+                placeholder="No. referensi transfer"
+              />
+            </FormField>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => setShowPaymentForm(false)}>
+              Batal
+            </Button>
+            <Button type="submit" size="sm" disabled={paymentMutation.isPending}>
+              {paymentMutation.isPending ? 'Memproses...' : 'Bayar'}
+            </Button>
           </div>
-        </div>
-      )}
+        </form>
+      </Dialog>
+
+      <ConfirmDialog
+        open={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        onConfirm={() => cancelMutation.mutate()}
+        title="Batalkan Invoice?"
+        message="Invoice yang dibatalkan tidak dapat dikembalikan. Lanjutkan?"
+        confirmLabel="Ya, Batalkan"
+        cancelLabel="Tidak"
+        variant="destructive"
+        isPending={cancelMutation.isPending}
+      />
     </div>
   )
 }

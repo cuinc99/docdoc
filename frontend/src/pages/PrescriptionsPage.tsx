@@ -1,14 +1,15 @@
 import { useState, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Eye, Check, Download, ChevronLeft, ChevronRight, Filter, Search } from 'lucide-react'
+import { Eye, Check, Download, Filter } from 'lucide-react'
 import { getPrescriptions, dispensePrescription, downloadPrescriptionPdf } from '@/api/prescriptions'
 import type { Prescription } from '@/api/prescriptions'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/retroui/Button'
-import { Input } from '@/components/retroui/Input'
 import { useSnackbar } from '@/components/retroui/Snackbar'
-import { PageHeader, EmptyState, ActionButton } from '@/components/shared'
-import { formatDateId, selectClass } from '@/lib/utils'
+import { Select } from '@/components/retroui/Select'
+import { Dialog } from '@/components/retroui/Dialog'
+import { PageHeader, EmptyState, ActionButton, SearchBar, Pagination, ConfirmDialog } from '@/components/shared'
+import { formatDateId } from '@/lib/utils'
 import type { AxiosError } from 'axios'
 import type { ApiResponse } from '@/types'
 
@@ -62,12 +63,6 @@ export default function PrescriptionsPage() {
     setPage(1)
   }, [search])
 
-  const handlePrevPage = useCallback(() => setPage((p) => Math.max(1, p - 1)), [])
-  const handleNextPage = useCallback(
-    () => setPage((p) => (meta && p < meta.last_page ? p + 1 : p)),
-    [meta]
-  )
-
   const handleDownloadPdf = useCallback(async (id: number) => {
     try {
       await downloadPrescriptionPdf(id)
@@ -83,26 +78,19 @@ export default function PrescriptionsPage() {
       <PageHeader title="Resep Obat" />
 
       <div className="mb-4 flex flex-col sm:flex-row gap-3">
-        <form onSubmit={handleSearch} className="flex gap-2 flex-1">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Cari nama pasien atau nomor resep..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button type="submit" variant="outline" size="sm">Cari</Button>
-        </form>
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          onSearch={handleSearch}
+          placeholder="Cari nama pasien atau nomor resep..."
+        />
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
-          <select value={filter} onChange={handleFilterChange} className={selectClass + ' min-w-[160px]'}>
+          <Select value={filter} onChange={handleFilterChange} className="min-w-[160px]">
             <option value="all">Semua Resep</option>
             <option value="pending">Belum Ditebus</option>
             <option value="dispensed">Sudah Ditebus</option>
-          </select>
+          </Select>
         </div>
       </div>
 
@@ -164,33 +152,13 @@ export default function PrescriptionsPage() {
         )}
       </div>
 
-      {meta && meta.last_page > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-muted-foreground font-body">
-            Hal {meta.current_page} dari {meta.last_page} ({meta.total} data)
-          </p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={page <= 1}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleNextPage} disabled={page >= meta.last_page}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      {meta && <Pagination meta={meta} onPageChange={setPage} />}
 
-      {detail && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setDetail(null)}>
-          <div
-            className="bg-background border-2 border-border shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b-2 border-border flex items-center justify-between">
-              <div>
-                <p className="font-heading font-medium">{detail.prescription_number}</p>
-                <p className="text-xs text-muted-foreground font-body">{formatDateId(detail.created_at)}</p>
-              </div>
+      <Dialog open={!!detail} onClose={() => setDetail(null)} title={detail?.prescription_number ?? ''}>
+        {detail && (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs text-muted-foreground font-body">{formatDateId(detail.created_at)}</p>
               {detail.is_dispensed ? (
                 <span className="inline-flex items-center gap-1 text-xs font-body px-2 py-0.5 rounded bg-green-50 text-green-700 border border-green-200">
                   <Check className="w-3 h-3" /> Sudah Ditebus
@@ -202,7 +170,7 @@ export default function PrescriptionsPage() {
               )}
             </div>
 
-            <div className="p-4 space-y-3">
+            <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2 text-sm font-body">
                 <div>
                   <span className="text-muted-foreground">Pasien</span>
@@ -248,7 +216,7 @@ export default function PrescriptionsPage() {
               )}
             </div>
 
-            <div className="p-4 border-t-2 border-border flex justify-end gap-2">
+            <div className="mt-4 pt-4 border-t-2 border-border flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => handleDownloadPdf(detail.id)}>
                 <Download className="w-4 h-4 mr-1" /> PDF
               </Button>
@@ -261,35 +229,21 @@ export default function PrescriptionsPage() {
                 Tutup
               </Button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Dialog>
 
-      {confirmDispense !== null && (
-        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4" onClick={() => setConfirmDispense(null)}>
-          <div
-            className="bg-background border-2 border-border shadow-lg p-6 max-w-sm w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="font-heading font-medium mb-2">Tebus Resep?</p>
-            <p className="text-sm text-muted-foreground font-body mb-4">
-              Resep yang sudah ditebus tidak dapat dibatalkan atau diedit lagi. Lanjutkan?
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => setConfirmDispense(null)}>
-                Batal
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => dispenseMutation.mutate(confirmDispense)}
-                disabled={dispenseMutation.isPending}
-              >
-                {dispenseMutation.isPending ? 'Memproses...' : 'Ya, Tebus'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={confirmDispense !== null}
+        onClose={() => setConfirmDispense(null)}
+        onConfirm={() => confirmDispense !== null && dispenseMutation.mutate(confirmDispense)}
+        title="Tebus Resep?"
+        message="Resep yang sudah ditebus tidak dapat dibatalkan atau diedit lagi. Lanjutkan?"
+        confirmLabel="Ya, Tebus"
+        cancelLabel="Batal"
+        variant="default"
+        isPending={dispenseMutation.isPending}
+      />
     </div>
   )
 }

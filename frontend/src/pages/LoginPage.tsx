@@ -58,7 +58,7 @@ export default function LoginPage() {
                 {...register('email')}
               />
               {errors.email && (
-                <p className="text-destructive text-sm mt-1">{errors.email.message}</p>
+                <p className="text-destructive text-sm mt-1 font-body">{errors.email.message}</p>
               )}
             </div>
             <div>
@@ -72,7 +72,7 @@ export default function LoginPage() {
                 {...register('password')}
               />
               {errors.password && (
-                <p className="text-destructive text-sm mt-1">{errors.password.message}</p>
+                <p className="text-destructive text-sm mt-1 font-body">{errors.password.message}</p>
               )}
             </div>
             <Button type="submit" className="w-full justify-center" disabled={isLoginLoading}>

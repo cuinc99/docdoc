@@ -13,7 +13,8 @@ import { useSnackbar } from '@/components/retroui/Snackbar'
 import { ScheduleDialog } from '@/components/schedules/ScheduleDialog'
 import { DeleteScheduleDialog } from '@/components/schedules/DeleteScheduleDialog'
 import { PageHeader, EmptyState, ActionButton } from '@/components/shared'
-import { selectClass, TIMEZONE } from '@/lib/utils'
+import { Select } from '@/components/retroui/Select'
+import { TIMEZONE } from '@/lib/utils'
 
 function toLocalDateStr(d: Date) {
   return d.toLocaleDateString('en-CA', { timeZone: TIMEZONE })
@@ -116,10 +117,10 @@ export default function SchedulesPage() {
         {!isDoctor && (
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-muted-foreground" />
-            <select
+            <Select
               value={doctorFilter}
               onChange={handleDoctorFilterChange}
-              className={selectClass + ' min-w-[160px]'}
+              className="min-w-[160px]"
               aria-label="Filter dokter"
             >
               <option value="">Semua Dokter</option>
@@ -128,7 +129,7 @@ export default function SchedulesPage() {
                   {doc.name}{doc.specialization ? ` - ${doc.specialization}` : ''}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         )}
 
